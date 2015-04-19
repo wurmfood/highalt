@@ -197,8 +197,7 @@ def cls():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 
-if usingCamera:
-    camThread = None
+camThread = None
 dataThread = None
 
 
@@ -210,7 +209,7 @@ try:
                 if not camThread:
                     logging.debug('No camera thread.')
                 elif not camThread.is_alive():
-                    logging.debug('Camrea thread exists but not alive')
+                    logging.debug('Camera thread exists but not alive')
                 camThread = CameraThread(cameraSubDirNum)
                 camThread.start()
                 cameraSubDirNum += 1
