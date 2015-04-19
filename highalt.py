@@ -90,7 +90,7 @@ if usingCamera:
     class CameraThread (threading.Thread):
         def __init__(self, instance_num):
             threading.Thread.__init__(self)
-            self.threadPath = os.path.join(vDir, format(instance_num, '%04d'))
+            self.threadPath = os.path.join(vDir, '{:04d}'.format(instance_num))
             logging.info('Creating new directory for video: %s', self.threadPath)
             os.mkdir(self.threadPath)
 
