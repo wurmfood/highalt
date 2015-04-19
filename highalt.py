@@ -33,6 +33,7 @@ if os.name != 'nt':
 else:
     logging.info('On Windows, so no camera enabled.')
 
+logging.info('Camera enabled: %s', usingCamera)
 
 def create_data_dirs():
     logging.debug('Creating data directories.')
@@ -206,6 +207,10 @@ try:
     while True:
         if usingCamera:
             if not camThread or not camThread.is_alive():
+                if not camThread:
+                    logging.debug('No camera thread.')
+                elif not camThread.is_alive():
+                    logging.debug('Camrea thread exists but not alive')
                 camThread = CameraThread(cameraSubDirNum)
                 camThread.start()
                 cameraSubDirNum += 1
