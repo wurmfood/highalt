@@ -33,6 +33,7 @@ if os.name != 'nt':
 else:
     logging.info('On Windows, so no camera enabled.')
 
+logging.info('Camera enabled: %s', usingCamera)
 
 def create_data_dirs():
     logging.debug('Creating data directories.')
@@ -97,19 +98,22 @@ if usingCamera:
         def run(self):
             # Start a camera instance
             logging.debug('Starting new camera thread.')
-            with picamera.PiCamera() as camera:
-                logging.debug('Camera instance created. Setting options.')
-                # Setup basic options
-                camera.vflip = True
-                camera.hflip = True
-                camera.resolution = (720, 480)
-                camera.framerate = 30
-                # Record a sequence of videos
-                for filename in camera.record_sequence(
-                        (os.path.join(self.threadPath, '08d.h264') % i for i in range(1, 36)),
-                        quality=20):
-                    logging.debug('Recording to file: %s', filename)
-                    camera.wait_recording(600)
+            try:
+                with picamera.PiCamera() as camera:
+                    logging.debug('Camera instance created. Setting options.')
+                    # Setup basic options
+                    camera.vflip = True
+                    camera.hflip = True
+                    camera.resolution = (720, 480)
+                    camera.framerate = 30
+                    # Record a sequence of videos
+                    for filename in camera.record_sequence(
+                            (os.path.join(self.threadPath, '08d.h264') % i for i in range(1, 36)),
+                            quality=20):
+                        logging.debug('Recording to file: %s', filename)
+                        camera.wait_recording(600)
+            except:
+                logging.warning('Caught an exception. Closing thread.')
 
 
 class DataThread (threading.Thread):
@@ -203,13 +207,20 @@ try:
     while True:
         if usingCamera:
             if not camThread or not camThread.is_alive():
+                if not camThread:
+                    logging.debug('No camera thread.')
+                elif not camThread.is_alive():
+                    logging.debug('Camrea thread exists but not alive')
                 camThread = CameraThread(cameraSubDirNum)
+                camThread.start()
                 cameraSubDirNum += 1
+                time.sleep(1)
             elif camThread:
-                camThread.join()
+                camThread.join(1)
         if not dataThread or not dataThread.is_alive():
             dataThread = DataThread()
             dataThread.start()
+            time.sleep(1)
         elif dataThread:
             dataThread.join(1)
 except:
