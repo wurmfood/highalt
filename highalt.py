@@ -205,12 +205,13 @@ try:
             if not camThread or not camThread.is_alive():
                 camThread = CameraThread(cameraSubDirNum)
                 cameraSubDirNum += 1
+            elif camThread:
+                camThread.join()
         if not dataThread or not dataThread.is_alive():
             dataThread = DataThread()
             dataThread.start()
-        if usingCamera:
-            camThread.join(1)
-        dataThread.join(1)
+        elif dataThread:
+            dataThread.join(1)
 except:
     logging.warning('Exception: ', sys.exc_info()[0])
 finally:
