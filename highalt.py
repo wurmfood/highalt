@@ -108,7 +108,7 @@ if usingCamera:
                     camera.framerate = 30
                     # Record a sequence of videos
                     for filename in camera.record_sequence(
-                            (os.path.join(self.threadPath, '08d.h264') % i for i in range(1, 36)),
+                            (os.path.join(self.threadPath, ('08d.h264' % i for i in range(1, 36)))),
                             quality=20):
                         logging.debug('Recording to file: %s', filename)
                         camera.wait_recording(600)
