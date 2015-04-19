@@ -95,6 +95,12 @@ if usingCamera:
             logging.info('Creating new directory for video: %s', self.threadPath)
             os.mkdir(self.threadPath)
 
+        def gen_paths(self, file_list):
+            tmp_array = []
+            for i in file_list:
+                tmp_array.append(os.path.join(self.threadPath, i))
+            return list(tmp_array)
+
         def run(self):
             # Start a camera instance
             logging.debug('Starting new camera thread.')
@@ -108,7 +114,7 @@ if usingCamera:
                     camera.framerate = 30
                     # Record a sequence of videos
                     for filename in camera.record_sequence(
-                            (os.path.join(self.threadPath, ('08d.h264' % i for i in range(1, 36)))),
+                            (self.gen_paths('%08d.h264' % i for i in range(1, 36))),
                             quality=20):
                         logging.debug('Recording to file: %s', filename)
                         camera.wait_recording(600)
