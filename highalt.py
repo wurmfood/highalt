@@ -97,19 +97,22 @@ if usingCamera:
         def run(self):
             # Start a camera instance
             logging.debug('Starting new camera thread.')
-            with picamera.PiCamera() as camera:
-                logging.debug('Camera instance created. Setting options.')
-                # Setup basic options
-                camera.vflip = True
-                camera.hflip = True
-                camera.resolution = (720, 480)
-                camera.framerate = 30
-                # Record a sequence of videos
-                for filename in camera.record_sequence(
-                        (os.path.join(self.threadPath, '08d.h264') % i for i in range(1, 36)),
-                        quality=20):
-                    logging.debug('Recording to file: %s', filename)
-                    camera.wait_recording(600)
+            try:
+                with picamera.PiCamera() as camera:
+                    logging.debug('Camera instance created. Setting options.')
+                    # Setup basic options
+                    camera.vflip = True
+                    camera.hflip = True
+                    camera.resolution = (720, 480)
+                    camera.framerate = 30
+                    # Record a sequence of videos
+                    for filename in camera.record_sequence(
+                            (os.path.join(self.threadPath, '08d.h264') % i for i in range(1, 36)),
+                            quality=20):
+                        logging.debug('Recording to file: %s', filename)
+                        camera.wait_recording(600)
+            except:
+                logging.warning('Caught an exception. Closing thread.')
 
 
 class DataThread (threading.Thread):
