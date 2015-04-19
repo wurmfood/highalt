@@ -204,7 +204,6 @@ try:
         if usingCamera:
             if not camThread or not camThread.is_alive():
                 camThread = CameraThread(cameraSubDirNum)
-                dataThread.start()
                 cameraSubDirNum += 1
         if not dataThread or not dataThread.is_alive():
             dataThread = DataThread()
