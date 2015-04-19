@@ -114,6 +114,7 @@ if usingCamera:
                         camera.wait_recording(600)
             except:
                 logging.warning('Caught an exception. Closing thread.')
+                logging.warning('Exception: ', sys.exc_info()[0])
 
 
 class DataThread (threading.Thread):
