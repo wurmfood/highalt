@@ -18,7 +18,7 @@ rootDir = 'E:\\David\\highalt' if os.name == 'nt' else '/data/highalt'
 # WARNING
 # ERROR
 # CRITICAL
-debugLevel = logging.DEBUG
+debugLevel = logging.INFO
 logging.basicConfig(filename=os.path.join(rootDir, 'highalt.log'),
                     format='%(asctime)s %(levelname)s:%(message)s',
                     level=debugLevel)
@@ -90,6 +90,7 @@ cameraSubDirNum = 0
 if usingCamera:
     class CameraThread (threading.Thread):
         def __init__(self, instance_num):
+            logging.debug('Creating new camera thread.')
             threading.Thread.__init__(self)
             self.threadPath = os.path.join(vDir, '{:04d}'.format(instance_num))
             logging.info('Creating new directory for video: %s', self.threadPath)
@@ -103,7 +104,7 @@ if usingCamera:
 
         def run(self):
             # Start a camera instance
-            logging.debug('Starting new camera thread.')
+            logging.debug('Camera thread running.')
             try:
                 with picamera.PiCamera() as camera:
                     logging.debug('Camera instance created. Setting options.')
