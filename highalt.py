@@ -209,11 +209,13 @@ try:
                 camThread = CameraThread(cameraSubDirNum)
                 camThread.start()
                 cameraSubDirNum += 1
+                time.sleep(1)
             elif camThread:
                 camThread.join(1)
         if not dataThread or not dataThread.is_alive():
             dataThread = DataThread()
             dataThread.start()
+            time.sleep(1)
         elif dataThread:
             dataThread.join(1)
 except:
