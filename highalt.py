@@ -63,8 +63,8 @@ try:
     serial_connection.bytesize = serial.EIGHTBITS
     serial_connection.parity = serial.PARITY_NONE
     serial_connection.timeout = 1
-except serial.SerialException as (errno, strerror):
-    logging.warning("Serial Error ({0}): {1}".format(errno, strerror))
+except serial.SerialException as errn:
+    logging.warning("Serial Error: {0}".format(errn))
 
 
 # Store the headers we get from the Arduino
