@@ -238,12 +238,18 @@ try:
                 time.sleep(1)
             elif dataThread:
                 dataThread.join(1)
+except KeyboardInterrupt:
+    logging.warning("Received keyboard interrupt. Shutting down.")
+    if dataThread:
+        dataThread.stop()
+    if camThread:
+        camThread.stop()
 except:
     logging.warning('Exception: ', sys.exc_info()[0])
 finally:
-    if dataThread.is_alive():
+    if dataThread and dataThread.is_alive():
         dataThread.join()
-    if camThread.is_alive():
+    if camThread and camThread.is_alive():
         camThread.join()
     logging.info('Closing serial connection')
     serial_connection.close()
