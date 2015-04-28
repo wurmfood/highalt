@@ -95,6 +95,9 @@ def get_headers(to_parse, h):
 cameraSubDirNum = 0
 
 if usingCamera:
+    class CameraThreadException(Exception):
+        pass
+
     class CameraThread (threading.Thread):
         def __init__(self, instance_num):
             logging.debug('Creating new camera thread.')
@@ -103,11 +106,16 @@ if usingCamera:
             logging.info('Creating new directory for video: %s', self.threadPath)
             os.mkdir(self.threadPath)
 
+
         def gen_paths(self, file_list):
             tmp_array = []
             for i in file_list:
                 tmp_array.append(os.path.join(self.threadPath, i))
             return list(tmp_array)
+
+        def stop(self):
+            # Raise an exception so that this ends.
+            raise CameraThreadException("We need to shut down, so stopping the camera.")
 
         def run(self):
             # Start a camera instance
@@ -244,10 +252,6 @@ try:
                 dataThread.join(1)
 except KeyboardInterrupt:
     logging.warning("Received keyboard interrupt. Shutting down.")
-    if dataThread:
-        dataThread.stop()
-    if camThread:
-        camThread.stop()
 except:
     logging.warning('Exception: ', sys.exc_info()[0])
 finally:
