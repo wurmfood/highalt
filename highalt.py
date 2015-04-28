@@ -126,6 +126,10 @@ if usingCamera:
                             quality=20):
                         logging.debug('Recording to file: %s', filename)
                         camera.wait_recording(600)
+            except KeyboardInterrupt:
+                logging.warning("Received keyboard interrupt. Shutting down camera thread.")
+                global usingCamera
+                usingCamera = False
             except:
                 logging.warning('Caught an exception. Closing thread.')
                 logging.warning('Exception: ', sys.exc_info()[0])
@@ -247,11 +251,15 @@ except KeyboardInterrupt:
 except:
     logging.warning('Exception: ', sys.exc_info()[0])
 finally:
+    logging.info("Shutting down. Joining threads.")
     if dataThread and dataThread.is_alive():
         dataThread.join()
+        logging.info('Closing serial connection')
+        serial_connection.close()
     if camThread and camThread.is_alive():
         camThread.join()
-    logging.info('Closing serial connection')
-    serial_connection.close()
+    logging.shutdown()
+
+
 
 
