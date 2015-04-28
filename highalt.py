@@ -35,15 +35,23 @@ else:
 
 logging.info('Camera enabled: %s', usingCamera)
 
+
+# Create the directories we're going to store things in.
 def create_data_dirs():
     logging.debug('Creating data directories.')
+    # Get today's date and separate out the time and date parts.
     d = datetime.datetime.today()
+    # Date format: YYYY-MM-DD
     date_dir = d.strftime('%Y-%m-%d')
+    # Time format: 24-hour HH-MM-SS
     time_dir = d.strftime('%H-%M-%S')
+    # Create the dirs, root\date\time.
     video_data_dir = os.path.join(rootDir, date_dir, time_dir, 'video')
     sensor_data_dir = os.path.join(rootDir, date_dir, time_dir, 'sensors')
+    # Exist ok means that if the dirs already exist, don't freak out.
     os.makedirs(video_data_dir, exist_ok=True)
     os.makedirs(sensor_data_dir, exist_ok=True)
+    # Return the paths we just created.
     return video_data_dir, sensor_data_dir
 
 # Create the directories we're going to use.
@@ -55,6 +63,7 @@ logging.info('Sensor dir: %s', sDir)
 port = 'COM3' if os.name == 'nt' else '/dev/ttyACM0'
 logging.debug('Setting up connection on %s', port)
 # Do this in a way that works better with error checking.
+# This way we can just not use the data part if we don't have a serial connection.
 serial_connection = serial.Serial()
 try:
     serial_connection.port = port
@@ -72,9 +81,9 @@ sensor_headers = []
 # Have we parsed the headers already?
 headers_not_parsed = True
 
-logging.debug('Resetting connection.')
-# Reset the Arduino by toggling DTR
+# If we have a connection, reset the Arduino by toggling DTR
 if serial_connection.isOpen():
+    logging.debug('Resetting connection.')
     serial_connection.setDTR(True)
     time.sleep(1)
     serial_connection.setDTR(False)
@@ -83,66 +92,61 @@ if serial_connection.isOpen():
     serial_connection.flushOutput()
 
 
-def get_headers(to_parse, h):
-    # Separate out the headers so we can include them in future files
-    x = to_parse.split(",")
-    for l in x:
-        h.append(l)
-    logging.debug('Parsing headers.')
-    logging.debug('Before: %s', to_parse)
-    logging.debug('After: %s', h)
-
+# Counter to keep track of which subdirectory we're in for the camera
 cameraSubDirNum = 0
 
-if usingCamera:
-    class CameraThreadException(Exception):
-        pass
 
-    class CameraThread (threading.Thread):
-        def __init__(self, instance_num):
-            logging.debug('Creating new camera thread.')
-            threading.Thread.__init__(self)
-            self.threadPath = os.path.join(vDir, '{:04d}'.format(instance_num))
-            logging.info('Creating new directory for video: %s', self.threadPath)
-            os.mkdir(self.threadPath)
+# Define our camera thread
+# if usingCamera:
+class CameraThreadException(Exception):
+    pass
 
 
-        def gen_paths(self, file_list):
-            tmp_array = []
-            for i in file_list:
-                tmp_array.append(os.path.join(self.threadPath, i))
-            return list(tmp_array)
+class CameraThread (threading.Thread):
+    def __init__(self, instance_num):
+        logging.debug('Creating new camera thread.')
+        threading.Thread.__init__(self)
+        self.threadPath = os.path.join(vDir, '{:04d}'.format(instance_num))
+        logging.info('Creating new directory for video: %s', self.threadPath)
+        os.mkdir(self.threadPath)
 
-        def stop(self):
-            # Raise an exception so that this ends.
-            raise CameraThreadException("We need to shut down, so stopping the camera.")
+    def gen_paths(self, file_list):
+        tmp_array = []
+        for i in file_list:
+            tmp_array.append(os.path.join(self.threadPath, i))
+        return list(tmp_array)
 
-        def run(self):
-            # Start a camera instance
-            logging.debug('Camera thread running.')
-            try:
-                with picamera.PiCamera() as camera:
-                    logging.debug('Camera instance created. Setting options.')
-                    # Setup basic options
-                    camera.vflip = True
-                    camera.hflip = True
-                    camera.resolution = (720, 480)
-                    camera.framerate = 30
-                    # Record a sequence of videos
-                    for filename in camera.record_sequence(
-                            (self.gen_paths('%08d.h264' % i for i in range(1, 36))),
-                            quality=20):
-                        logging.debug('Recording to file: %s', filename)
-                        camera.wait_recording(600)
-            except KeyboardInterrupt:
-                logging.warning("Received keyboard interrupt. Shutting down camera thread.")
-                global usingCamera
-                usingCamera = False
-            except:
-                logging.warning('Caught an exception. Closing thread.')
-                logging.warning('Exception: ', sys.exc_info()[0])
+    def stop(self):
+        # Raise an exception so that this ends.
+        raise CameraThreadException("We need to shut down, so stopping the camera.")
+
+    def run(self):
+        # Start a camera instance
+        logging.debug('Camera thread running.')
+        try:
+            with picamera.PiCamera() as camera:
+                logging.debug('Camera instance created. Setting options.')
+                # Setup basic options
+                camera.vflip = True
+                camera.hflip = True
+                camera.resolution = (720, 480)
+                camera.framerate = 30
+                # Record a sequence of videos
+                for filename in camera.record_sequence(
+                        (self.gen_paths('%08d.h264' % i for i in range(1, 36))),
+                        quality=20):
+                    logging.debug('Recording to file: %s', filename)
+                    camera.wait_recording(600)
+        except KeyboardInterrupt:
+            logging.warning("Received keyboard interrupt. Shutting down camera thread.")
+            global usingCamera
+            usingCamera = False
+        except:
+            logging.warning('Caught an exception. Closing thread.')
+            logging.warning('Exception: ', sys.exc_info()[0])
 
 
+# Define our data thread.
 class DataThread (threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
@@ -178,7 +182,7 @@ class DataThread (threading.Thread):
                         # We're going to want them for each file. Maybe.
                         if headers_not_parsed and len(response.split(",")) > 1:
                             logging.debug("Don't have headers, trying to parse.")
-                            get_headers(response, sensor_headers)
+                            self.get_headers(response, sensor_headers)
                             logging.debug(sensor_headers)
                             logging.debug("Supposedly we got headers.")
                             if len(sensor_headers) > 1:
@@ -217,6 +221,16 @@ class DataThread (threading.Thread):
         assert isinstance(fn, str)
         return fn
 
+    @staticmethod
+    def get_headers(to_parse, h):
+        # Separate out the headers so we can include them in future files
+        x = to_parse.split(",")
+        for l in x:
+            h.append(l)
+        logging.debug('Parsing headers.')
+        logging.debug('Before: %s', to_parse)
+        logging.debug('After: %s', h)
+
 
 # Clear the screen regardless of the OS.
 # This will go away once we are storing data better.
@@ -243,6 +257,9 @@ try:
                 time.sleep(1)
             elif camThread:
                 camThread.join(1)
+        else:
+            # Camera either isn't connected or wrong OS. Ignore.
+            pass
         if serial_connection.isOpen():
             if not dataThread or not dataThread.is_alive():
                 dataThread = DataThread()
@@ -250,6 +267,14 @@ try:
                 time.sleep(1)
             elif dataThread:
                 dataThread.join(1)
+        else:
+            # No serial connection could be made. Ignore.
+            pass
+        # If neither camera nor serial connection is available, abort.
+        if not usingCamera and not serial_connection.isOpen():
+            logging.info("Nothing connected. Shutting down.")
+            logging.shutdown()
+            break
 except KeyboardInterrupt:
     logging.warning("Received keyboard interrupt. Shutting down.")
     if camThread:
