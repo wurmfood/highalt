@@ -252,6 +252,8 @@ try:
                 dataThread.join(1)
 except KeyboardInterrupt:
     logging.warning("Received keyboard interrupt. Shutting down.")
+    if camThread:
+        camThread.stop()
 except:
     logging.warning('Exception: ', sys.exc_info()[0])
 finally:
