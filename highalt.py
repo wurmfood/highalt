@@ -54,13 +54,19 @@ logging.info('Sensor dir: %s', sDir)
 # Automatically select the correct port for the OS.
 port = 'COM3' if os.name == 'nt' else '/dev/ttyACM0'
 logging.debug('Setting up connection on %s', port)
-serial_connection = serial.Serial(port,
-                                  baudrate=115200,
-                                  stopbits=serial.STOPBITS_ONE,
-                                  bytesize=serial.EIGHTBITS,
-                                  parity=serial.PARITY_NONE,
-                                  timeout=1
-                                  )
+# Do this in a way that works better with error checking.
+serial_connection = serial.Serial()
+try:
+    serial_connection.port = port
+    serial_connection.baudrate = 115200
+    serial_connection.stopbits = serial.STOPBITS_ONE
+    serial_connection.bytesize = serial.EIGHTBITS
+    serial_connection.parity = serial.PARITY_NONE
+    serial_connection.timeout = 1
+except serial.SerialException as (errno, strerror):
+    logging.warning("Serial Error ({0}): {1}".format(errno, strerror))
+
+
 # Store the headers we get from the Arduino
 sensor_headers = []
 # Have we parsed the headers already?
