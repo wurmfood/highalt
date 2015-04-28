@@ -74,12 +74,13 @@ headers_not_parsed = True
 
 logging.debug('Resetting connection.')
 # Reset the Arduino by toggling DTR
-serial_connection.setDTR(True)
-time.sleep(1)
-serial_connection.setDTR(False)
-# Flush any data there at the moment
-serial_connection.flushInput()
-serial_connection.flushOutput()
+if serial_connection.isOpen():
+    serial_connection.setDTR(True)
+    time.sleep(1)
+    serial_connection.setDTR(False)
+    # Flush any data there at the moment
+    serial_connection.flushInput()
+    serial_connection.flushOutput()
 
 
 def get_headers(to_parse, h):
@@ -230,15 +231,20 @@ try:
                 time.sleep(1)
             elif camThread:
                 camThread.join(1)
-        if not dataThread or not dataThread.is_alive():
-            dataThread = DataThread()
-            dataThread.start()
-            time.sleep(1)
-        elif dataThread:
-            dataThread.join(1)
+        if serial_connection.isOpen():
+            if not dataThread or not dataThread.is_alive():
+                dataThread = DataThread()
+                dataThread.start()
+                time.sleep(1)
+            elif dataThread:
+                dataThread.join(1)
 except:
     logging.warning('Exception: ', sys.exc_info()[0])
 finally:
+    if dataThread.is_alive():
+        dataThread.join()
+    if camThread.is_alive():
+        camThread.join()
     logging.info('Closing serial connection')
     serial_connection.close()
 
