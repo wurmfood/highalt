@@ -110,7 +110,7 @@ class DataThread (threading.Thread):
         except KeyboardInterrupt:
             logging.warning('Received keyboard interrupt.')
         except:
-            logging.warning('Exception: ', sys.exc_info()[0])
+            logging.warning('Exception: {0}', sys.exc_info()[0])
             logging.warning('Caught an exception. Closing thread.')
         else:
             pass
