@@ -228,6 +228,9 @@ class DataThread (threading.Thread):
                             f.flush()
                             # We wrote another line, increment the counter.
                             line_count += 1
+
+                        if shutdown:
+                            break
         except serial.SerialException or serial.SerialTimeoutException:
             logging.debug("Problem with serial connection. Trying to re-start one.")
             # try again to open the serial connection
