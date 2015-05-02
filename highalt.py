@@ -65,15 +65,23 @@ logging.debug('Setting up connection on %s', port)
 # Do this in a way that works better with error checking.
 # This way we can just not use the data part if we don't have a serial connection.
 serial_connection = serial.Serial()
-try:
-    serial_connection.port = port
-    serial_connection.baudrate = 115200
-    serial_connection.stopbits = serial.STOPBITS_ONE
-    serial_connection.bytesize = serial.EIGHTBITS
-    serial_connection.parity = serial.PARITY_NONE
-    serial_connection.timeout = 1
-except serial.SerialException as errn:
-    logging.warning("Serial Error: {0}".format(errn))
+
+
+# I don't like this, but it's more robust if we do it.
+# Define a function to actually establish a connection. That way, if we don't
+# get one immediately, we can try to get one any time we would try to establish
+# a new thread.
+def establish_serial_connection():
+    try:
+        global serial_connection
+        serial_connection.port = port
+        serial_connection.baudrate = 115200
+        serial_connection.stopbits = serial.STOPBITS_ONE
+        serial_connection.bytesize = serial.EIGHTBITS
+        serial_connection.parity = serial.PARITY_NONE
+        serial_connection.timeout = 1
+    except serial.SerialException as errn:
+        logging.warning("Serial Error: {0}".format(errn))
 
 
 # Store the headers we get from the Arduino
@@ -81,15 +89,17 @@ sensor_headers = []
 # Have we parsed the headers already?
 headers_not_parsed = True
 
+
 # If we have a connection, reset the Arduino by toggling DTR
-if serial_connection.isOpen():
-    logging.debug('Resetting connection.')
-    serial_connection.setDTR(True)
-    time.sleep(1)
-    serial_connection.setDTR(False)
-    # Flush any data there at the moment
-    serial_connection.flushInput()
-    serial_connection.flushOutput()
+def reset_arduino():
+    if serial_connection.isOpen():
+        logging.debug('Resetting connection.')
+        serial_connection.setDTR(True)
+        time.sleep(1)
+        serial_connection.setDTR(False)
+        # Flush any data there at the moment
+        serial_connection.flushInput()
+        serial_connection.flushOutput()
 
 
 # Counter to keep track of which subdirectory we're in for the camera
@@ -98,10 +108,6 @@ cameraSubDirNum = 0
 
 # Define our camera thread
 # if usingCamera:
-class CameraThreadException(Exception):
-    pass
-
-
 class CameraThread (threading.Thread):
     def __init__(self, instance_num):
         logging.debug('Creating new camera thread.')
@@ -116,10 +122,6 @@ class CameraThread (threading.Thread):
             tmp_array.append(os.path.join(self.threadPath, i))
         return list(tmp_array)
 
-    def stop(self):
-        # Raise an exception so that this ends.
-        raise CameraThreadException("We need to shut down, so stopping the camera.")
-
     def run(self):
         # Start a camera instance
         logging.debug('Camera thread running.')
@@ -129,7 +131,12 @@ class CameraThread (threading.Thread):
                 # Setup basic options
                 camera.vflip = True
                 camera.hflip = True
-                camera.resolution = (720, 480)
+                # 480p
+                # camera.resolution = (720, 480)
+                # 720p
+                # camera.resolution = (1280, 720)
+                # 1080p
+                camera.resolution = (1920, 1080)
                 camera.framerate = 30
                 # Record a sequence of videos
                 for filename in camera.record_sequence(
@@ -234,8 +241,8 @@ class DataThread (threading.Thread):
 
 # Clear the screen regardless of the OS.
 # This will go away once we are storing data better.
-def cls():
-    os.system('cls' if os.name == 'nt' else 'clear')
+# def cls():
+#    os.system('cls' if os.name == 'nt' else 'clear')
 
 
 camThread = None
@@ -260,6 +267,7 @@ try:
         else:
             # Camera either isn't connected or wrong OS. Ignore.
             pass
+
         if serial_connection.isOpen():
             if not dataThread or not dataThread.is_alive():
                 dataThread = DataThread()
@@ -268,8 +276,10 @@ try:
             elif dataThread:
                 dataThread.join(1)
         else:
-            # No serial connection could be made. Ignore.
-            pass
+            # try again to open the serial connection
+            establish_serial_connection()
+            # Reset the Arduino
+            reset_arduino()
         # If neither camera nor serial connection is available, abort.
         if not usingCamera and not serial_connection.isOpen():
             logging.info("Nothing connected. Shutting down.")
@@ -277,8 +287,6 @@ try:
             break
 except KeyboardInterrupt:
     logging.warning("Received keyboard interrupt. Shutting down.")
-    if camThread:
-        camThread.stop()
 except:
     logging.warning('Exception: ', sys.exc_info()[0])
 finally:
