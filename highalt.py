@@ -107,10 +107,16 @@ class CameraThread (threading.Thread):
                         (self.gen_paths('%08d.h264' % i for i in range(1, 36))),
                         quality=20):
                     logging.debug('Camera Thread: Recording to file: {0}'.format(filename))
-                    camera.wait_recording(600)
+                    global shutdown
+                    if shutdown:
+                        break
+                    else:
+                        camera.wait_recording(600)
         except KeyboardInterrupt:
             logging.warning("Camera Thread: Received keyboard interrupt. Shutting down camera thread.")
             global usingCamera
+            global shutdown
+            shutdown = True
             usingCamera = False
         except:
             logging.warning('Camera Thread: Caught an exception. Closing thread.')
