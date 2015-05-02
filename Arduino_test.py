@@ -95,8 +95,12 @@ class DataThread (threading.Thread):
                     # a series of bytes into a string.
                     response = self.ser.readline().rstrip().decode()
                     logging.debug(str(line_count) + " : " + response)
-
-
+        except IOError:
+            logging.debug("IO Problem. Trying to fix.")
+            # try again to open the serial connection
+            establish_serial_connection()
+            # Reset the Arduino
+            reset_arduino()
         except serial.SerialException:
             logging.debug("Problem with serial connection. Trying to re-start one.")
             # try again to open the serial connection
