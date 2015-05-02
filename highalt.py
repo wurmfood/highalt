@@ -217,12 +217,14 @@ class DataThread (threading.Thread):
             logging.debug("IO Problem. Trying to fix.")
             # try again to open the serial connection
             establish_serial_connection()
+            serial_connection.open()
             # Reset the Arduino
             reset_arduino()
         except serial.SerialException:
             logging.debug("Problem with serial connection. Trying to re-start one.")
             # try again to open the serial connection
             establish_serial_connection()
+            serial_connection.open()
             # Reset the Arduino
             reset_arduino()
         except KeyboardInterrupt:
@@ -293,7 +295,7 @@ try:
             logging.info("No serial connection. Trying to establish.")
             # try again to open the serial connection
             establish_serial_connection()
-            serial.open()
+            serial_connection.open()
             # Reset the Arduino
             reset_arduino()
         # If neither camera nor serial connection is available, abort.
