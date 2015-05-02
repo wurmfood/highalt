@@ -198,6 +198,10 @@ reset_arduino()
 try:
     while True:
         if not dataThread or not dataThread.is_alive():
+            dataThread = DataThread()
+            dataThread.start()
+            time.sleep(1)
+        elif dataThread:
             dataThread.join(1)
 except KeyboardInterrupt:
     logging.warning("Received keyboard interrupt. Shutting down.")
