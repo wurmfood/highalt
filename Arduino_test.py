@@ -18,7 +18,7 @@ rootDir = 'E:\\David\\highalt' if os.name == 'nt' else '/data/highalt'
 # WARNING
 # ERROR
 # CRITICAL
-debugLevel = logging.INFO
+debugLevel = logging.DEBUG
 logging.basicConfig(filename=os.path.join(rootDir, 'highalt.log'),
                     format='%(asctime)s %(levelname)s:%(message)s',
                     level=debugLevel)
