@@ -171,7 +171,8 @@ class DataThread (threading.Thread):
         try:
             # Pull this in here so it's only done once.
             global headers_not_parsed
-            while True:
+            global shutdown
+            while not shutdown:
                 # Open a file to write data to and write 100 lines.
                 line_count = 0
                 with open(self.gen_filename(), 'wt', encoding='utf-8') as f:
@@ -265,9 +266,12 @@ camThread = None
 dataThread = None
 
 
+# Setup a variable to control if we're supposed to be shutting down.
+shutdown = False
+
 # Supervise the threads, recreating if needed
 try:
-    while True:
+    while not shutdown:
         if usingCamera:
             if not camThread or not camThread.is_alive():
                 if not camThread:
@@ -305,10 +309,12 @@ try:
             break
 except KeyboardInterrupt:
     logging.warning("Received keyboard interrupt. Shutting down.")
+    shutdown = True
 except:
     logging.warning('Exception: ', sys.exc_info()[0])
 finally:
     logging.info("Shutting down. Joining threads.")
+    shutdown = True
     if dataThread and dataThread.is_alive():
         dataThread.join()
         logging.info('Closing serial connection')
