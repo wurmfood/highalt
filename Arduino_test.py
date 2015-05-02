@@ -3,6 +3,7 @@
 import serial
 import time
 import os
+import datetime
 import threading
 import logging
 import sys
@@ -121,6 +122,7 @@ dataThread = None
 establish_serial_connection()
 reset_arduino()
 serial_connection.open()
+time.sleep(1)
 
 # Supervise the threads, recreating if needed
 try:
