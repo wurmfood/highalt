@@ -211,6 +211,18 @@ class DataThread (threading.Thread):
                             f.flush()
                             # We wrote another line, increment the counter.
                             line_count += 1
+        except IOError:
+            logging.debug("IO Problem. Trying to fix.")
+            # try again to open the serial connection
+            establish_serial_connection()
+            # Reset the Arduino
+            reset_arduino()
+        except serial.SerialException:
+            logging.debug("Problem with serial connection. Trying to re-start one.")
+            # try again to open the serial connection
+            establish_serial_connection()
+            # Reset the Arduino
+            reset_arduino()
         except KeyboardInterrupt:
             logging.warning('Received keyboard interrupt.')
         except:
@@ -276,8 +288,10 @@ try:
             elif dataThread:
                 dataThread.join(1)
         else:
+            logging.info("No serial connection. Trying to establish.")
             # try again to open the serial connection
             establish_serial_connection()
+            serial.open()
             # Reset the Arduino
             reset_arduino()
         # If neither camera nor serial connection is available, abort.
