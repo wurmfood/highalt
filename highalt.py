@@ -134,9 +134,9 @@ class CameraThread (threading.Thread):
                 # 480p
                 # camera.resolution = (720, 480)
                 # 720p
-                # camera.resolution = (1280, 720)
+                camera.resolution = (1280, 720)
                 # 1080p
-                camera.resolution = (1920, 1080)
+                # camera.resolution = (1920, 1080)
                 camera.framerate = 30
                 # Record a sequence of videos
                 for filename in camera.record_sequence(
