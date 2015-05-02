@@ -106,15 +106,16 @@ class CameraThread (threading.Thread):
                 for filename in camera.record_sequence(
                         (self.gen_paths('%08d.h264' % i for i in range(1, 36))),
                         quality=20):
-                    logging.debug('Recording to file: (0}'.format(filename))
+                    logging.debug('Camera Thread: Recording to file: (0}'.format(filename))
                     camera.wait_recording(600)
         except KeyboardInterrupt:
-            logging.warning("Received keyboard interrupt. Shutting down camera thread.")
+            logging.warning("Camera Thread: Received keyboard interrupt. Shutting down camera thread.")
             global usingCamera
             usingCamera = False
         except:
-            logging.warning('Caught an exception. Closing thread.')
-            logging.warning('Exception: {0}'.format(sys.exc_info()[0]))
+            logging.warning('Camera Thread: Caught an exception. Closing thread.')
+            for i in sys.exc_info():
+                logging.warning('Camera Thread: Exception: {0}'.format(i))
 
 
 ##############################
@@ -172,7 +173,7 @@ class DataThread (threading.Thread):
         # Keep alive, basically.
         # Have to encode it because the serial stream only takes bytes.
         self.keep_alive = "Hello.".encode('ascii')
-        logging.debug('New logging thread created.')
+        logging.debug('Data Thread: New logging thread created.')
 
     def run(self):
         try:
@@ -183,7 +184,7 @@ class DataThread (threading.Thread):
                 # Open a file to write data to and write 100 lines.
                 line_count = 0
                 with open(self.gen_filename(), 'wt', encoding='utf-8') as f:
-                    logging.debug('Opened new file for sensor data: {0}'.format(f.name))
+                    logging.debug('Data Thread: Opened new file for sensor data: {0}'.format(f.name))
                     while line_count < 100:
                         # We have to send this to start the data flowing
                         # Also keep writing to it just to make sure the buffer on the other
@@ -198,23 +199,23 @@ class DataThread (threading.Thread):
                         # In case we haven't already done so, separate out the headers.
                         # We're going to want them for each file. Maybe.
                         if not headers_parsed and len(response.split(",")) > 1:
-                            logging.debug("Don't have headers, trying to parse.")
+                            logging.debug("Data Thread: Don't have headers, trying to parse.")
                             self.get_headers(response, sensor_headers)
                             logging.debug(sensor_headers)
-                            logging.debug("Supposedly we got headers.")
+                            logging.debug("Data Thread: Supposedly we got headers.")
                             if len(sensor_headers) > 1:
                                 headers_parsed = True
 
                         # If we just opened a new file and we have headers, print them to the file.
                         if line_count == 0 and headers_parsed:
-                            logging.debug("We have headers, line count is zero, so writing headers to file.")
+                            logging.debug("Data Thread: We have headers, line count is zero. Writing headers to file.")
                             # Joins the headers using a comma to separate them.
                             f.write(','.join(str(x) for x in sensor_headers))
                             f.write('\n')
 
                         # Make sure the response actually has data in it
                         if len(response) > 0:
-                            logging.debug("Writing response to file.")
+                            logging.debug("Data Thread: Writing response to file.")
                             # Write our response and attach an endline.
                             f.write(response)
                             f.write('\n')
@@ -229,12 +230,12 @@ class DataThread (threading.Thread):
             # Reset the Arduino
             reset_arduino()
         except KeyboardInterrupt:
-            logging.warning('Received keyboard interrupt.')
+            logging.warning('Data Thread: Received keyboard interrupt.')
             global shutdown
             shutdown = True
         except:
-            logging.warning('Exception: {0}'.format(sys.exc_info()[0]))
-            logging.warning('Caught an exception. Closing thread.')
+            logging.warning('Data Thread: Exception: {0}'.format(sys.exc_info()[0]))
+            logging.warning('Data Thread: Caught an exception. Closing data thread.')
         else:
             pass
 
