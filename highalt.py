@@ -22,13 +22,13 @@ rootDir = 'E:\\David\\highalt' if os.name == 'nt' else '/data/highalt'
 # WARNING
 # ERROR
 # CRITICAL
-debugLevel = logging.DEBUG
-# logging.basicConfig(filename=os.path.join(rootDir, 'highalt.log'),
-#                    format='%(asctime)s %(levelname)s:%(message)s',
-#                    level=debugLevel)
-# For testing, log to console:
-logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s',
+debugLevel = logging.INFO
+logging.basicConfig(filename=os.path.join(rootDir, 'highalt.log'),
+                    format='%(asctime)s %(levelname)s:%(message)s',
                     level=debugLevel)
+# For testing, log to console:
+# logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s',
+#                    level=debugLevel)
 
 
 # Create the directories we're going to store things in.
