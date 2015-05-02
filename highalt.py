@@ -8,6 +8,10 @@ import threading
 import logging
 import sys
 
+
+# Setup a variable to control if we're supposed to be shutting down.
+shutdown = False
+
 # Set our root directory
 rootDir = 'E:\\David\\highalt' if os.name == 'nt' else '/data/highalt'
 
@@ -280,10 +284,6 @@ class DataThread (threading.Thread):
 
 camThread = None
 dataThread = None
-
-
-# Setup a variable to control if we're supposed to be shutting down.
-shutdown = False
 
 # Supervise the threads, recreating if needed
 try:
