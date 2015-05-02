@@ -44,7 +44,7 @@ def establish_serial_connection():
         serial_connection.bytesize = serial.EIGHTBITS
         serial_connection.parity = serial.PARITY_NONE
         serial_connection.timeout = 1
-        logging.debug("Serial connection: {0}", int(serial_connection.isOpen()))
+        logging.debug("Serial connection: {0}".format(serial_connection.isOpen()))
     except serial.SerialException as errn:
         logging.warning("Serial Error: {0}".format(errn))
 
