@@ -19,30 +19,8 @@ rootDir = 'E:\\David\\highalt' if os.name == 'nt' else '/data/highalt'
 # ERROR
 # CRITICAL
 debugLevel = logging.DEBUG
-logging.basicConfig(filename=os.path.join(rootDir, 'highalt.log'),
-                    format='%(asctime)s %(levelname)s:%(message)s',
+logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s',
                     level=debugLevel)
-
-
-# Create the directories we're going to store things in.
-def create_data_dirs():
-    logging.debug('Creating data directories.')
-    # Get today's date and separate out the time and date parts.
-    d = datetime.datetime.today()
-    # Date format: YYYY-MM-DD
-    date_dir = d.strftime('%Y-%m-%d')
-    # Time format: 24-hour HH-MM-SS
-    time_dir = d.strftime('%H-%M-%S')
-    # Create the dirs, root\date\time.
-    sensor_data_dir = os.path.join(rootDir, date_dir, time_dir, 'sensors')
-    # Exist ok means that if the dirs already exist, don't freak out.
-    os.makedirs(sensor_data_dir, exist_ok=True)
-    # Return the paths we just created.
-    return sensor_data_dir
-
-# Create the directories we're going to use.
-sDir = create_data_dirs()
-logging.info('Sensor dir: %s', sDir)
 
 # Automatically select the correct port for the OS.
 port = 'COM3' if os.name == 'nt' else '/dev/ttyACM0'
@@ -66,6 +44,7 @@ def establish_serial_connection():
         serial_connection.bytesize = serial.EIGHTBITS
         serial_connection.parity = serial.PARITY_NONE
         serial_connection.timeout = 1
+        logging.debug("Serial connection: ", serial_connection.isOpen())
     except serial.SerialException as errn:
         logging.warning("Serial Error: {0}".format(errn))
 
@@ -103,49 +82,21 @@ class DataThread (threading.Thread):
         # Time to actually connect the serial port and try to communicate.
         try:
             # Pull this in here so it's only done once.
-            global headers_not_parsed
             while True:
                 # Open a file to write data to and write 100 lines.
                 line_count = 0
-                with open(self.gen_filename(), 'wt', encoding='utf-8') as f:
-                    logging.debug('Opened new file for sensor data: %s', f.name)
-                    while line_count < 100:
-                        # We have to send this to start the data flowing
-                        # Also keep writing to it just to make sure the buffer on the other
-                        # end stays active.
-                        self.ser.write(self.keep_alive)
+                while line_count < 100:
+                    # We have to send this to start the data flowing
+                    # Also keep writing to it just to make sure the buffer on the other
+                    # end stays active.
+                    self.ser.write(self.keep_alive)
 
-                        # Take the line we read, strip off end characters and convert it from
-                        # a series of bytes into a string.
-                        response = self.ser.readline().rstrip().decode()
-                        logging.debug(str(line_count) + " : " + response)
+                    # Take the line we read, strip off end characters and convert it from
+                    # a series of bytes into a string.
+                    response = self.ser.readline().rstrip().decode()
+                    logging.debug(str(line_count) + " : " + response)
 
-                        # In case we haven't already done so, separate out the headers.
-                        # We're going to want them for each file. Maybe.
-                        if headers_not_parsed and len(response.split(",")) > 1:
-                            logging.debug("Don't have headers, trying to parse.")
-                            self.get_headers(response, sensor_headers)
-                            logging.debug(sensor_headers)
-                            logging.debug("Supposedly we got headers.")
-                            if len(sensor_headers) > 1:
-                                headers_not_parsed = False
 
-                        # If we just opened a new file and we have headers, print them to the file.
-                        if line_count == 0 and not headers_not_parsed:
-                            logging.debug("We have headers, line count is zero, so writing headers to file.")
-                            # Joins the headers using a comma to separate them.
-                            f.write(','.join(str(x) for x in sensor_headers))
-                            f.write('\n')
-
-                        # Make sure the response actually has data in it
-                        if len(response) > 0:
-                            logging.debug("Got a response, headers already written, writing line to file.")
-                            # Write our response and attach an endline.
-                            f.write(response)
-                            f.write('\n')
-                            f.flush()
-                            # We wrote another line, increment the counter.
-                            line_count += 1
         except serial.SerialException:
             logging.debug("Problem with serial connection. Trying to re-start one.")
             # try again to open the serial connection
@@ -180,13 +131,6 @@ class DataThread (threading.Thread):
         logging.debug('After: %s', h)
 
 
-# Clear the screen regardless of the OS.
-# This will go away once we are storing data better.
-# def cls():
-#    os.system('cls' if os.name == 'nt' else 'clear')
-
-
-camThread = None
 dataThread = None
 
 
