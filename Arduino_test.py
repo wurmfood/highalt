@@ -3,7 +3,6 @@
 import serial
 import time
 import os
-import datetime
 import threading
 import logging
 import sys
@@ -115,32 +114,13 @@ class DataThread (threading.Thread):
         else:
             pass
 
-    # A small function to generate the name of the file we'll log to.
-    # Format for the filename is: YYYYMMDD.HHMMSS.csv
-    @staticmethod
-    def gen_filename():
-        d = datetime.datetime.today()
-        fn = os.path.join(sDir, d.strftime('%Y%m%d') + "." + d.strftime('%H%M%S') + ".csv")
-        assert isinstance(fn, str)
-        return fn
-
-    @staticmethod
-    def get_headers(to_parse, h):
-        # Separate out the headers so we can include them in future files
-        x = to_parse.split(",")
-        for l in x:
-            h.append(l)
-        logging.debug('Parsing headers.')
-        logging.debug('Before: %s', to_parse)
-        logging.debug('After: %s', h)
-
-
 dataThread = None
 
 
 # Get the serial connection started, hopefully.
 establish_serial_connection()
 reset_arduino()
+serial_connection.open()
 
 # Supervise the threads, recreating if needed
 try:
