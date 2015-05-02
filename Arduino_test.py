@@ -146,7 +146,7 @@ class DataThread (threading.Thread):
                             f.flush()
                             # We wrote another line, increment the counter.
                             line_count += 1
-        except SerialException:
+        except serial.SerialException:
             logging.debug("Problem with serial connection. Trying to re-start one.")
             # try again to open the serial connection
             establish_serial_connection()
@@ -190,14 +190,14 @@ camThread = None
 dataThread = None
 
 
+# Get the serial connection started, hopefully.
+establish_serial_connection()
+reset_arduino()
+
 # Supervise the threads, recreating if needed
 try:
     while True:
         if not dataThread or not dataThread.is_alive():
-            dataThread = DataThread()
-            dataThread.start()
-            time.sleep(1)
-        elif dataThread:
             dataThread.join(1)
 except KeyboardInterrupt:
     logging.warning("Received keyboard interrupt. Shutting down.")
