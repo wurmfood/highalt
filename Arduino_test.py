@@ -146,6 +146,12 @@ class DataThread (threading.Thread):
                             f.flush()
                             # We wrote another line, increment the counter.
                             line_count += 1
+        except SerialException:
+            logging.debug("Problem with serial connection. Trying to re-start one.")
+            # try again to open the serial connection
+            establish_serial_connection()
+            # Reset the Arduino
+            reset_arduino()
         except KeyboardInterrupt:
             logging.warning('Received keyboard interrupt.')
         except:
@@ -187,20 +193,12 @@ dataThread = None
 # Supervise the threads, recreating if needed
 try:
     while True:
-        if serial_connection.isOpen():
-            logging.debug("Serial connection exists, starting data thread.")
-            if not dataThread or not dataThread.is_alive():
-                dataThread = DataThread()
-                dataThread.start()
-                time.sleep(1)
-            elif dataThread:
-                dataThread.join(1)
-        else:
-            logging.debug("No serial connection. Trying to start one.")
-            # try again to open the serial connection
-            establish_serial_connection()
-            # Reset the Arduino
-            reset_arduino()
+        if not dataThread or not dataThread.is_alive():
+            dataThread = DataThread()
+            dataThread.start()
+            time.sleep(1)
+        elif dataThread:
+            dataThread.join(1)
 except KeyboardInterrupt:
     logging.warning("Received keyboard interrupt. Shutting down.")
 except:
