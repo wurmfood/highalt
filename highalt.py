@@ -149,7 +149,7 @@ def establish_serial_connection():
 # If we have a connection, reset the Arduino by toggling DTR
 def reset_arduino():
     if serial_connection.isOpen():
-        logging.debug('Resetting connection.')
+        logging.debug('Resetting connection to Arduino.')
         serial_connection.setDTR(True)
         time.sleep(1)
         serial_connection.setDTR(False)
@@ -280,11 +280,15 @@ try:
     # As long as we're not trying to shut down:
     while not shutdown:
         if usingCamera:
+            # Check to see if camThread is still None or, if it's actually set up,
+            # check to see if it's alive.
             if not camThread or not camThread.is_alive():
                 if not camThread:
+                    # Just noting that the thread doesn't exist.
                     logging.debug('No camera thread.')
                 elif not camThread.is_alive():
                     logging.debug('Camera thread exists but not alive')
+                # Start up the thread and be ready for another thread.
                 camThread = CameraThread(cameraSubDirNum)
                 camThread.start()
                 cameraSubDirNum += 1
@@ -295,7 +299,9 @@ try:
             # Camera either isn't connected or wrong OS. Ignore.
             pass
 
+        # If we have an open connection
         if serial_connection.isOpen():
+            # but we haven't created a data thread yet, or our current one isn't alive:
             if not dataThread or not dataThread.is_alive():
                 dataThread = DataThread()
                 dataThread.start()
@@ -312,8 +318,8 @@ try:
 
         # If neither camera nor serial connection is available, abort.
         if not usingCamera and not serial_connection.isOpen():
-            logging.info("Nothing connected. Shutting down.")
-            logging.shutdown()
+            logging.info("Nothing connected. Try establishing stuff again in a few seconds.")
+            time.sleep(5)
             break
 except KeyboardInterrupt:
     logging.warning("Received keyboard interrupt. Shutting down.")
