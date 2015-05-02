@@ -35,7 +35,7 @@ if os.name != 'nt':
 else:
     logging.info('On Windows, so no camera enabled.')
 
-logging.info('Camera enabled: %s', usingCamera)
+logging.info('Camera enabled: {0}'.format(usingCamera))
 
 
 # Create the directories we're going to store things in.
@@ -58,12 +58,12 @@ def create_data_dirs():
 
 # Create the directories we're going to use.
 vDir, sDir = create_data_dirs()
-logging.info('Video dir: %s', vDir)
-logging.info('Sensor dir: %s', sDir)
+logging.info('Video dir: {0}'.format(vDir))
+logging.info('Sensor dir: {0}'.format(sDir))
 
 # Automatically select the correct port for the OS.
 port = 'COM3' if os.name == 'nt' else '/dev/ttyACM0'
-logging.debug('Setting up connection on %s', port)
+logging.debug('Setting up connection on {0}'.format(port))
 # Do this in a way that works better with error checking.
 # This way we can just not use the data part if we don't have a serial connection.
 serial_connection = serial.Serial()
@@ -89,7 +89,7 @@ def establish_serial_connection():
 # Store the headers we get from the Arduino
 sensor_headers = []
 # Have we parsed the headers already?
-headers_not_parsed = True
+headers_parsed = False
 
 
 # If we have a connection, reset the Arduino by toggling DTR
@@ -115,7 +115,7 @@ class CameraThread (threading.Thread):
         logging.debug('Creating new camera thread.')
         threading.Thread.__init__(self)
         self.threadPath = os.path.join(vDir, '{:04d}'.format(instance_num))
-        logging.info('Creating new directory for video: %s', self.threadPath)
+        logging.info('Creating new directory for video: {0}'.format(self.threadPath))
         os.mkdir(self.threadPath)
 
     def gen_paths(self, file_list):
@@ -144,7 +144,7 @@ class CameraThread (threading.Thread):
                 for filename in camera.record_sequence(
                         (self.gen_paths('%08d.h264' % i for i in range(1, 36))),
                         quality=20):
-                    logging.debug('Recording to file: %s', filename)
+                    logging.debug('Recording to file: (0}'.format(filename))
                     camera.wait_recording(600)
         except KeyboardInterrupt:
             logging.warning("Received keyboard interrupt. Shutting down camera thread.")
@@ -152,7 +152,7 @@ class CameraThread (threading.Thread):
             usingCamera = False
         except:
             logging.warning('Caught an exception. Closing thread.')
-            logging.warning('Exception: ', sys.exc_info()[0])
+            logging.warning('Exception: {0}'.format(sys.exc_info()[0]))
 
 
 # Define our data thread.
@@ -167,16 +167,15 @@ class DataThread (threading.Thread):
         logging.debug('New logging thread created.')
 
     def run(self):
-        # Time to actually connect the serial port and try to communicate.
         try:
-            # Pull this in here so it's only done once.
-            global headers_not_parsed
+            global headers_parsed
             global shutdown
+            # If we haven't been told to shut down:
             while not shutdown:
                 # Open a file to write data to and write 100 lines.
                 line_count = 0
                 with open(self.gen_filename(), 'wt', encoding='utf-8') as f:
-                    logging.debug('Opened new file for sensor data: %s', f.name)
+                    logging.debug('Opened new file for sensor data: {0}'.format(f.name))
                     while line_count < 100:
                         # We have to send this to start the data flowing
                         # Also keep writing to it just to make sure the buffer on the other
@@ -190,16 +189,16 @@ class DataThread (threading.Thread):
 
                         # In case we haven't already done so, separate out the headers.
                         # We're going to want them for each file. Maybe.
-                        if headers_not_parsed and len(response.split(",")) > 1:
+                        if not headers_parsed and len(response.split(",")) > 1:
                             logging.debug("Don't have headers, trying to parse.")
                             self.get_headers(response, sensor_headers)
                             logging.debug(sensor_headers)
                             logging.debug("Supposedly we got headers.")
                             if len(sensor_headers) > 1:
-                                headers_not_parsed = False
+                                headers_parsed = True
 
                         # If we just opened a new file and we have headers, print them to the file.
-                        if line_count == 0 and not headers_not_parsed:
+                        if line_count == 0 and headers_parsed:
                             logging.debug("We have headers, line count is zero, so writing headers to file.")
                             # Joins the headers using a comma to separate them.
                             f.write(','.join(str(x) for x in sensor_headers))
@@ -207,21 +206,14 @@ class DataThread (threading.Thread):
 
                         # Make sure the response actually has data in it
                         if len(response) > 0:
-                            logging.debug("Got a response, headers already written, writing line to file.")
+                            logging.debug("Writing response to file.")
                             # Write our response and attach an endline.
                             f.write(response)
                             f.write('\n')
                             f.flush()
                             # We wrote another line, increment the counter.
                             line_count += 1
-        except IOError:
-            logging.debug("IO Problem. Trying to fix.")
-            # try again to open the serial connection
-            establish_serial_connection()
-            serial_connection.open()
-            # Reset the Arduino
-            reset_arduino()
-        except serial.SerialException:
+        except serial.SerialException or serial.SerialTimeoutException:
             logging.debug("Problem with serial connection. Trying to re-start one.")
             # try again to open the serial connection
             establish_serial_connection()
@@ -230,8 +222,10 @@ class DataThread (threading.Thread):
             reset_arduino()
         except KeyboardInterrupt:
             logging.warning('Received keyboard interrupt.')
+            global shutdown
+            shutdown = True
         except:
-            logging.warning('Exception: ', sys.exc_info()[0])
+            logging.warning('Exception: {0}'.format(sys.exc_info()[0]))
             logging.warning('Caught an exception. Closing thread.')
         else:
             pass
@@ -252,8 +246,8 @@ class DataThread (threading.Thread):
         for l in x:
             h.append(l)
         logging.debug('Parsing headers.')
-        logging.debug('Before: %s', to_parse)
-        logging.debug('After: %s', h)
+        logging.debug('Before: {0}'.format(to_parse))
+        logging.debug('After: {0}'.format(h))
 
 
 # Clear the screen regardless of the OS.
@@ -271,6 +265,7 @@ shutdown = False
 
 # Supervise the threads, recreating if needed
 try:
+    # As long as we're not trying to shut down:
     while not shutdown:
         if usingCamera:
             if not camThread or not camThread.is_alive():
@@ -302,6 +297,7 @@ try:
             serial_connection.open()
             # Reset the Arduino
             reset_arduino()
+
         # If neither camera nor serial connection is available, abort.
         if not usingCamera and not serial_connection.isOpen():
             logging.info("Nothing connected. Shutting down.")
@@ -311,7 +307,7 @@ except KeyboardInterrupt:
     logging.warning("Received keyboard interrupt. Shutting down.")
     shutdown = True
 except:
-    logging.warning('Exception: ', sys.exc_info()[0])
+    logging.warning('Exception: {0}'.format(sys.exc_info()[0]))
 finally:
     logging.info("Shutting down. Joining threads.")
     shutdown = True
