@@ -26,17 +26,6 @@ debugLevel = logging.DEBUG
 logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s',
                     level=debugLevel)
 
-# In case we're on the Pi, start up the camera.
-usingCamera = False
-if os.name != 'nt':
-    logging.info('Enabling camera.')
-    import picamera
-    usingCamera = True
-else:
-    logging.info('On Windows, so no camera enabled.')
-
-logging.info('Camera enabled: {0}'.format(usingCamera))
-
 
 # Create the directories we're going to store things in.
 def create_data_dirs():
@@ -61,48 +50,21 @@ vDir, sDir = create_data_dirs()
 logging.info('Video dir: {0}'.format(vDir))
 logging.info('Sensor dir: {0}'.format(sDir))
 
-# Automatically select the correct port for the OS.
-port = 'COM3' if os.name == 'nt' else '/dev/ttyACM0'
-logging.debug('Setting up connection on {0}'.format(port))
-# Do this in a way that works better with error checking.
-# This way we can just not use the data part if we don't have a serial connection.
-serial_connection = serial.Serial()
 
+#################################
+# Camera Thread section
+#################################
 
-# I don't like this, but it's more robust if we do it.
-# Define a function to actually establish a connection. That way, if we don't
-# get one immediately, we can try to get one any time we would try to establish
-# a new thread.
-def establish_serial_connection():
-    try:
-        global serial_connection
-        serial_connection.port = port
-        serial_connection.baudrate = 115200
-        serial_connection.stopbits = serial.STOPBITS_ONE
-        serial_connection.bytesize = serial.EIGHTBITS
-        serial_connection.parity = serial.PARITY_NONE
-        serial_connection.timeout = 1
-    except serial.SerialException as errn:
-        logging.warning("Serial Error: {0}".format(errn))
+# In case we're on the Pi, start up the camera.
+usingCamera = False
+if os.name != 'nt':
+    logging.info('Enabling camera.')
+    import picamera
+    usingCamera = True
+else:
+    logging.info('On Windows, so no camera enabled.')
 
-
-# Store the headers we get from the Arduino
-sensor_headers = []
-# Have we parsed the headers already?
-headers_parsed = False
-
-
-# If we have a connection, reset the Arduino by toggling DTR
-def reset_arduino():
-    if serial_connection.isOpen():
-        logging.debug('Resetting connection.')
-        serial_connection.setDTR(True)
-        time.sleep(1)
-        serial_connection.setDTR(False)
-        # Flush any data there at the moment
-        serial_connection.flushInput()
-        serial_connection.flushOutput()
-
+logging.info('Camera enabled: {0}'.format(usingCamera))
 
 # Counter to keep track of which subdirectory we're in for the camera
 cameraSubDirNum = 0
@@ -153,6 +115,52 @@ class CameraThread (threading.Thread):
         except:
             logging.warning('Caught an exception. Closing thread.')
             logging.warning('Exception: {0}'.format(sys.exc_info()[0]))
+
+
+##############################
+# Data Thread section
+##############################
+
+# Automatically select the correct port for the OS.
+port = 'COM3' if os.name == 'nt' else '/dev/ttyACM0'
+# Do this in a way that works better with error checking.
+# This way we can just not use the data part if we don't have a serial connection.
+serial_connection = serial.Serial()
+
+
+# I don't like this, but it's more robust if we do it.
+# Define a function to actually establish a connection. That way, if we don't
+# get one immediately, we can try to get one any time we would try to establish
+# a new thread.
+def establish_serial_connection():
+    try:
+        logging.debug('Setting up connection on {0}'.format(port))
+        global serial_connection
+        serial_connection.port = port
+        serial_connection.baudrate = 115200
+        serial_connection.stopbits = serial.STOPBITS_ONE
+        serial_connection.bytesize = serial.EIGHTBITS
+        serial_connection.parity = serial.PARITY_NONE
+        serial_connection.timeout = 1
+    except serial.SerialException as errn:
+        logging.warning("Serial Error: {0}".format(errn))
+
+
+# If we have a connection, reset the Arduino by toggling DTR
+def reset_arduino():
+    if serial_connection.isOpen():
+        logging.debug('Resetting connection.')
+        serial_connection.setDTR(True)
+        time.sleep(1)
+        serial_connection.setDTR(False)
+        # Flush any data there at the moment
+        serial_connection.flushInput()
+        serial_connection.flushOutput()
+
+# Store the headers we get from the Arduino
+sensor_headers = []
+# Have we parsed the headers already?
+headers_parsed = False
 
 
 # Define our data thread.
@@ -255,6 +263,10 @@ class DataThread (threading.Thread):
 # def cls():
 #    os.system('cls' if os.name == 'nt' else 'clear')
 
+
+################################
+# Establish and control the threads we've set up
+################################
 
 camThread = None
 dataThread = None
