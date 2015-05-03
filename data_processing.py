@@ -29,6 +29,7 @@ def process_args(inArgs):
     ofile = None
     force = False
     usage = "Usage: data_processing.py -i <input directory> -o <output directory>"
+
     try:
         # allow -i or --inputDir, -o or --outputFile, and -h.
         opts, args = getopt.getopt(inArgs, "hfi:o:", ["inputDir", "outputFile", "force"])
@@ -36,6 +37,7 @@ def process_args(inArgs):
             raise getopt.GetoptError('Not enough arguments provided.')
     except getopt.GetoptError as err:
         print(err.msg)
+        print("\n")
         print(usage)
         sys.exit(2)
 
@@ -44,25 +46,13 @@ def process_args(inArgs):
             print(usage)
         elif opt == "-f":
             force = True
+            print("Force true. Will overwrite out file.")
         elif opt == "-i":
             print('Input dir: {0}'.format(arg))
             idir = arg
-            if not os.path.isdir(idir):
-                print("Error: Input directory {0} is not a directory.".format(arg))
-                print(usage)
-                sys.exit(-1)
         elif opt == "-o":
             print('Output file: {0}'.format(arg))
-            if os.path.isfile(arg) and force:
-                # Go ahead and use the file. We'll just overwrite it.
-                print("File {0} already exists. Overwriting.".format(arg))
-                ofile = arg
-            elif os.path.isfile(arg) and not force:
-                # Don't force it, so print error and exit.
-                print("File {0} already exists. Aborting.".format(arg))
-                sys.exit(-1)
-            else:
-                ofile = arg
+            ofile = arg
         elif opt == "-":
             # We don't actually detect this, but sending a - on its own kills further
             # processing. Not sure why. Will find out later.
@@ -70,14 +60,35 @@ def process_args(inArgs):
         else:
             print("Unrecognized option: {0}".format(arg))
 
+    # Verify the arguments are good:
+    # idir needs to be a directory.
+    if not os.path.isdir(idir):
+        print("Error: Input directory {0} is not a directory.".format(idir))
+        print("\n")
+        print(usage)
+        sys.exit(-1)
+
+    # If ofile already exists, check to see if force is on. If not, abort.
+    if os.path.isfile(ofile) and force:
+        # Go ahead and use the file. We'll just overwrite it.
+        print("File {0} already exists. Overwriting.".format(ofile))
+    elif os.path.isfile(ofile) and not force:
+        # Don't force it, so print error and exit.
+        print("File {0} already exists. Aborting.".format(ofile))
+        sys.exit(-1)
+    else:
+        pass
+
+    # If either idir or ofile are not set, abort.
     if not idir or not ofile:
         # If we didn't get anything, due to strange behavior I have to look up,
         # abort and print an error.
         print("Error: Unknown problem with arguments. Unable to parse.")
+        print("\n")
         print(usage)
         sys.exit(-1)
-
-    return idir, ofile
+    else:
+        return idir, ofile
 
 
 ###############################
