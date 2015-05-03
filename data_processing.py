@@ -85,10 +85,15 @@ def process_args(inArgs):
             # Don't force it, so print error and exit.
             print("File {0} already exists. Aborting.".format(outpath))
             sys.exit(-1)
-        else:
+        elif os.path.exists(outpath):
             # Something else is wrong with the output
+            print(outpath)
+            print(outpathdir)
             print("Problem with the output file. Did you pass a directory? Aborting.")
             sys.exit(-1)
+        else:
+            # Everything seems to be ok.
+            pass
     else:
         print("We don't have permission to write to the target. Aborting.")
         sys.exit(-1)
@@ -116,10 +121,12 @@ def print_contents(inDir):
             if f[-4:] == ".csv":
                 full_files.append(os.path.join(dPath, f))
     full_files.sort()
-    for i in full_files:
-        print(i)
 
+    return full_files
 
+def process_file(filepath):
+    print(filepath)
+    pass
 
 
 
@@ -131,7 +138,10 @@ def main(argv):
 
     inputdir, outfile = process_args(argv)
 
-    print_contents(inputdir)
+    file_list = print_contents(inputdir)
+
+    for f in file_list:
+        process_file(f)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
