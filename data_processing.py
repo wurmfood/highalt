@@ -28,6 +28,7 @@ def process_args(inArgs):
     idir = None
     ofile = None
     force = False
+    cwd = os.getcwd()
     usage = "Usage: data_processing.py -i <input directory> -o <output directory>"
 
     try:
@@ -68,16 +69,26 @@ def process_args(inArgs):
         print(usage)
         sys.exit(-1)
 
-    # If ofile already exists, check to see if force is on. If not, abort.
-    if os.path.isfile(ofile) and force:
-        # Go ahead and use the file. We'll just overwrite it.
-        print("File {0} already exists. Overwriting.".format(ofile))
-    elif os.path.isfile(ofile) and not force:
-        # Don't force it, so print error and exit.
-        print("File {0} already exists. Aborting.".format(ofile))
-        sys.exit(-1)
-    else:
+    # Build a full path for the outfile.
+    outpath = os.path.normpath(os.path.join(cwd, ofile))
+    outpathdir, outpathfile = os.path.split(outpath)
+
+    # Check to see if the outpathdir is possibly writable.
+    if os.access(outpathdir, os.W_OK) and os.access(outpathdir, os.X_OK):
+        # print("Output file can be written to, we think.")
         pass
+    else:
+        print("We don't have permission to write to the target. Aborting.")
+        sys.exit(-1)
+
+    # If outpath already exists, check to see if force is on. If not, abort.
+    if os.path.isfile(outpath) and force:
+        # Go ahead and use the file. We'll just overwrite it.
+        print("File {0} already exists. Overwriting.".format(outpath))
+    elif os.path.isfile(outpath) and not force:
+        # Don't force it, so print error and exit.
+        print("File {0} already exists. Aborting.".format(outpath))
+        sys.exit(-1)
 
     # If either idir or ofile are not set, abort.
     if not idir or not ofile:
@@ -88,7 +99,7 @@ def process_args(inArgs):
         print(usage)
         sys.exit(-1)
     else:
-        return idir, ofile
+        return idir, outpath
 
 
 ###############################
