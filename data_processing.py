@@ -71,26 +71,29 @@ def process_args(inArgs):
 
     # Build a full path for the outfile.
     outpath = os.path.normpath(os.path.join(cwd, ofile))
-    outpathdir, outpathfile = os.path.split(outpath)
+    # Get just the directory part of the full path so we can test it.
+    outpathdir, _ = os.path.split(outpath)
 
     # Check to see if the outpathdir is possibly writable.
     if os.access(outpathdir, os.W_OK) and os.access(outpathdir, os.X_OK):
-        # print("Output file can be written to, we think.")
-        pass
+        # Output file can be written to, we think.
+        # If outpath already exists, check to see if force is on. If not, abort.
+        if os.path.isfile(outpath) and force:
+            # Go ahead and use the file. We'll just overwrite it.
+            print("File {0} already exists. Overwriting.".format(outpath))
+        elif os.path.isfile(outpath) and not force:
+            # Don't force it, so print error and exit.
+            print("File {0} already exists. Aborting.".format(outpath))
+            sys.exit(-1)
+        else:
+            # Something else is wrong with the output
+            print("Problem with the output file. Did you pass a directory? Aborting.")
+            sys.exit(-1)
     else:
         print("We don't have permission to write to the target. Aborting.")
         sys.exit(-1)
 
-    # If outpath already exists, check to see if force is on. If not, abort.
-    if os.path.isfile(outpath) and force:
-        # Go ahead and use the file. We'll just overwrite it.
-        print("File {0} already exists. Overwriting.".format(outpath))
-    elif os.path.isfile(outpath) and not force:
-        # Don't force it, so print error and exit.
-        print("File {0} already exists. Aborting.".format(outpath))
-        sys.exit(-1)
-
-    # If either idir or ofile are not set, abort.
+    # If either idir or ofile are not set somehow, abort.
     if not idir or not ofile:
         # If we didn't get anything, due to strange behavior I have to look up,
         # abort and print an error.
