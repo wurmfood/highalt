@@ -143,8 +143,9 @@ def process_file(inpath, fileout, headers_proccessed):
             # If we haven't yet processed headers, try to find some.
             if not headers_proccessed:
                 # If we have a header, all of data[0] should be that header.
-                # To make sure, check the first three characters of data[0].
-                if data[0][0:3] == "GPS":
+                # To make sure, check the first nine characters of data[0].
+                # (there's also a line that's GPS: OK if the gps is working right)
+                if data[0][0:9] == "GPS: Date":
                     # Splice onto the beginning:
                     s = 'millis, '
                     # Join the rest with commas.
