@@ -191,5 +191,9 @@ def main(argv):
     except:
         pass
 
+
+############################
+# Start it all up.
+############################
 if __name__ == "__main__":
     main(sys.argv[1:])
