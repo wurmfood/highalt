@@ -124,8 +124,26 @@ def print_contents(inDir):
 
     return full_files
 
-def process_file(filepath):
-    print(filepath)
+
+def process_file(filepath, headers_proccessed):
+    with open(filepath) as filein:
+        for line in filein:
+            # Correct for something dumb I'm doing elsewhere. If I ever get
+            # around to fixing the Arduino code, I can clean this up a lot.
+            data = line.rstrip().split(' : ')
+            s = ''
+            # If we have a header, all of data[0] should be that header.
+            # To make sure, check the first three characters of data[0].
+            if data[0][0:3] == "GPS":
+                # Splice onto the beginning:
+                s = 'millis, '
+            else:
+                pass
+            # Now join the whole thing using commas. If it's a header,
+            # nothing really happens except to add on the full header.
+            # Otherwise, we combine the two sections with a comma.
+            s += ','.join(data)
+            print(s)
     pass
 
 
@@ -141,7 +159,7 @@ def main(argv):
     file_list = print_contents(inputdir)
 
     for f in file_list:
-        process_file(f)
+        process_file(f, False)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
