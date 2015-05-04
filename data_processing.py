@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
-import io
 import sys
 import getopt
 import os
 
+############################
+# General idea of what we're going to do:
+############################
 
 # Open the file we're going to output to
 # Open the directory
@@ -20,6 +22,7 @@ import os
 # The first is milliseconds since boot.
 # split everything else across commas
 # Write out a join across commas to the output file
+
 
 ###############################
 # Process the arguments and make sure they're valid
@@ -114,7 +117,7 @@ def process_args(inArgs):
 # Get a list of files from the input directory
 # and filter the .csv files.
 ###############################
-def print_contents(inDir):
+def get_contents(inDir):
     full_files = []
     for dPath, dName, fname in os.walk(inDir, topdown=True):
         for f in fname:
@@ -125,41 +128,67 @@ def print_contents(inDir):
     return full_files
 
 
-def process_file(filepath, headers_proccessed):
-    with open(filepath) as filein:
+###############################
+# Process the file that is brought in.
+# If we haven't seen a header, pull it out and start a new file with it.
+# If we have, write out the line we read in, correctly formatted.
+###############################
+def process_file(inpath, fileout, headers_proccessed):
+    with open(inpath) as filein:
         for line in filein:
             # Correct for something dumb I'm doing elsewhere. If I ever get
             # around to fixing the Arduino code, I can clean this up a lot.
             data = line.rstrip().split(' : ')
-            s = ''
-            # If we have a header, all of data[0] should be that header.
-            # To make sure, check the first three characters of data[0].
-            if data[0][0:3] == "GPS":
-                # Splice onto the beginning:
-                s = 'millis, '
-            else:
-                pass
-            # Now join the whole thing using commas. If it's a header,
-            # nothing really happens except to add on the full header.
-            # Otherwise, we combine the two sections with a comma.
-            s += ','.join(data)
-            print(s)
-    pass
 
+            # If we haven't yet processed headers, try to find some.
+            if not headers_proccessed:
+                # If we have a header, all of data[0] should be that header.
+                # To make sure, check the first three characters of data[0].
+                if data[0][0:3] == "GPS":
+                    # Splice onto the beginning:
+                    s = 'millis, '
+                    # Join the rest with commas.
+                    s += ','.join(data)
+                    fileout.write(s)
+                    fileout.write('\n')
+                    headers_proccessed = True
+                else:
+                    # If it isn't, it must be something else that we're not worried about,
+                    # so ignore it.
+                    pass
+            # So long as it's not another header line, dump it to the outfile.
+            elif not data[0][0:3] == "GPS":
+                # Join the whole thing using commas.
+                s = ','.join(data)
+                fileout.write(s)
+                fileout.write('\n')
 
+    return headers_proccessed
 
 
 ###############################
 # Main function
 ###############################
 def main(argv):
-
+    # Get the input directory and output file from the arguments
     inputdir, outfile = process_args(argv)
 
-    file_list = print_contents(inputdir)
+    # Get a list of the files we're going to process
+    file_list = get_contents(inputdir)
 
-    for f in file_list:
-        process_file(f, False)
+    # Have we already processed the headers?
+    processed_headers = False
+
+    # For each file we're supposed to process, send it to be processed
+    # and tell the function if we've already processed the headers or not.
+    try:
+        # Open the file with mode 'wt'. 'w' says to overwrite the file.
+        # 't' is for text mode.
+        with open(outfile, mode='wt') as outfile_fd:
+            for f in file_list:
+                processed_headers = process_file(f, outfile_fd, processed_headers)
+    except:
+        pass
 
 if __name__ == "__main__":
     main(sys.argv[1:])
