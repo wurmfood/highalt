@@ -5,23 +5,18 @@ import getopt
 import os
 
 ############################
-# General idea of what we're going to do:
+# data_processing.py
+#
+# Takes up to three arguments:
+# -i <indir> : directory to parse for input files
+# -o <outfile> : file to write the output to
+# -f : force overwriting of output file if it already exists
+#
+# Reads in all the .csv files in a directory. It looks for a header
+# that appears at the top of the files from output of the highalt Arduino code.
+# The multiple files are then concatenated with a single header line.
+#
 ############################
-
-# Open the file we're going to output to
-# Open the directory
-# Get a list of files
-# for each file in the directory
-# open the file and read a line
-# If the line starts with "GPS:" pull it aside as a header
-# insert a "millis()" at the start of the line
-# Write the result to the output file
-# only keep the first one like this we find
-# Other than that, it needs to start with an integer.
-# Because I was dumb, the first split is across a colon
-# The first is milliseconds since boot.
-# split everything else across commas
-# Write out a join across commas to the output file
 
 
 ###############################
