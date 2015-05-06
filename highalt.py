@@ -346,7 +346,3 @@ finally:
     if camThread and camThread.is_alive():
         camThread.join()
     logging.shutdown()
-
-
-
-
