@@ -96,4 +96,4 @@ def main2():
 # Start it all up.
 ############################
 if __name__ == "__main__":
-    main2()
+    main()
