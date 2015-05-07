@@ -328,6 +328,8 @@ try:
                 reset_arduino()
             except serial.SerialException as err:
                 logging.warning("Thread Control: Serial Exception: {0}".format(err.strerror))
+                # Sleep for a bit before actually continuing.
+                time.sleep(5)
 
         # If neither camera nor serial connection is available, abort.
         if not usingCamera and not serial_connection.isOpen():
