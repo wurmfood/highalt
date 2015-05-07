@@ -236,7 +236,7 @@ class DataThread (threading.Thread):
                         if shutdown:
                             break
         except serial.SerialException or serial.SerialTimeoutException:
-            logging.debug("Problem with serial connection. Trying to re-start one.")
+            logging.debug("Data Thread: Problem with serial connection. Trying to re-start one.")
             # try again to open the serial connection
             establish_serial_connection()
             serial_connection.open()
@@ -295,9 +295,9 @@ try:
             if not camThread or not camThread.is_alive():
                 if not camThread:
                     # Just noting that the thread doesn't exist.
-                    logging.debug('No camera thread.')
+                    logging.debug('Thread Control - No camera thread.')
                 elif not camThread.is_alive():
-                    logging.debug('Camera thread exists but not alive')
+                    logging.debug('Thread Control - Camera thread exists but not alive')
                 # Start up the thread and be ready for another thread.
                 camThread = CameraThread(cameraSubDirNum)
                 camThread.start()
@@ -319,12 +319,15 @@ try:
             elif dataThread:
                 dataThread.join(1)
         else:
-            logging.info("No serial connection. Trying to establish.")
+            logging.info("Thread Control - No serial connection. Trying to establish.")
             # try again to open the serial connection
-            establish_serial_connection()
-            serial_connection.open()
-            # Reset the Arduino
-            reset_arduino()
+            try:
+                establish_serial_connection()
+                serial_connection.open()
+                # Reset the Arduino
+                reset_arduino()
+            except serial.SerialException as err:
+                logging.warning("Thread Control: Serial Exception: {0}".format(err.strerror))
 
         # If neither camera nor serial connection is available, abort.
         if not usingCamera and not serial_connection.isOpen():
@@ -335,7 +338,7 @@ except KeyboardInterrupt:
     logging.warning("Received keyboard interrupt. Shutting down.")
     shutdown = True
 except:
-    logging.warning('Exception: {0}'.format(sys.exc_info()[0]))
+    logging.warning('Thread Control - Exception: {0}'.format(sys.exc_info()[0]))
 finally:
     logging.info("Shutting down. Joining threads.")
     shutdown = True
