@@ -77,6 +77,9 @@ def main():
 # Start it all up, alt option.
 ############################
 def main2():
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(POWERPIN, GPIO.IN)
+
     GPIO.wait_for_edge(POWERPIN,
                        GPIO.FALLING)
     os.system(fake_shutdown_cmd)
