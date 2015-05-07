@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import time
+import sys
 import RPi.GPIO as GPIO
 import os
 
@@ -65,12 +66,24 @@ def main():
                           GPIO.FALLING,
                           callback=shutdown_callback,
                           bouncetime=300)
-    while True:
-        time.sleep(500)
+    try:
+        while True:
+            time.sleep(500)
+    except KeyboardInterrupt:
+        sys.exit(1)
+
+
+############################
+# Start it all up, alt option.
+############################
+def main2():
+    GPIO.wait_for_edge(POWERPIN,
+                       GPIO.FALLING)
+    os.system(fake_shutdown_cmd)
 
 
 ############################
 # Start it all up.
 ############################
 if __name__ == "__main__":
-    main()
+    main2()
