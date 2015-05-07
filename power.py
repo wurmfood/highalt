@@ -37,7 +37,7 @@ import os
 ############################
 
 # fake_shutdown_cmd = "shutdown -k now"
-real_shutdown_cmd = "shutdown -h --no-wall now"
+real_shutdown_cmd = "shutdown -h now"
 
 # Pin to use for power detection
 POWERPIN = 22
