@@ -77,12 +77,19 @@ def main():
 # Start it all up, alt option.
 ############################
 def main2():
+    # Setup GPIO pins
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(POWERPIN, GPIO.IN)
 
-    GPIO.wait_for_edge(POWERPIN,
-                       GPIO.FALLING)
-    os.system(fake_shutdown_cmd)
+    while True:
+        # Monitor the pin.
+        GPIO.wait_for_edge(POWERPIN,
+                           GPIO.FALLING)
+
+        # Require it to still be pushed after 5 seconds.
+        time.sleep(5)
+        if GPIO.input(POWERPIN) == 0:
+            os.system(fake_shutdown_cmd)
 
 
 ############################
