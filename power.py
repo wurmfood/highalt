@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import time
-import sys
 import RPi.GPIO as GPIO
 import os
 
@@ -37,7 +36,7 @@ import os
 #
 ############################
 
-fake_shutdown_cmd = "shutdown -k now"
+# fake_shutdown_cmd = "shutdown -k now"
 real_shutdown_cmd = "shutdown -h --no-wall now"
 
 # Pin to use for power detection
@@ -45,38 +44,9 @@ POWERPIN = 22
 
 
 ############################
-# Function that will be called by the callback
-############################
-def shutdown_callback(channel):
-    os.system(fake_shutdown_cmd)
-    # os.system(real_shutdown_cmd)
-
-
-############################
-# Start it all up.
-############################
-def main():
-    # Setup GPIO pins
-
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(POWERPIN, GPIO.IN)
-
-    # Set up the GPIO event detection.
-    GPIO.add_event_detect(POWERPIN,
-                          GPIO.FALLING,
-                          callback=shutdown_callback,
-                          bouncetime=300)
-    try:
-        while True:
-            time.sleep(500)
-    except KeyboardInterrupt:
-        sys.exit(1)
-
-
-############################
 # Start it all up, alt option.
 ############################
-def main2():
+def main():
     # Setup GPIO pins
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(POWERPIN, GPIO.IN)
@@ -89,7 +59,7 @@ def main2():
         # Require it to still be pushed after 5 seconds.
         time.sleep(5)
         if GPIO.input(POWERPIN) == 0:
-            os.system(fake_shutdown_cmd)
+            os.system(real_shutdown_cmd)
 
 
 ############################
