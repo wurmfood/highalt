@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import sys
+import time
 import RPi.GPIO as GPIO
 import os
 
@@ -65,6 +65,8 @@ def main():
                           GPIO.FALLING,
                           callback=shutdown_callback,
                           bouncetime=300)
+    while True:
+        time.sleep(500)
 
 
 ############################
