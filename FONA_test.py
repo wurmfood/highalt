@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import Serial
+import serial
 
 def send_at(connection):
     message = "AT"
@@ -8,7 +8,7 @@ def send_at(connection):
         connection.writeline(message)
         for line in connection:
             print(line)
-    except Serial.SerialException as err:
+    except serial.SerialException as err:
         print(err.args)
 
 def send_ati():
@@ -21,11 +21,11 @@ def set_local_timestamp_mode():
     pass
 
 def fona_test():
-    serial_connection = Serial.Serial(port="/dev/ttyUSB0",
+    serial_connection = serial.Serial(port="/dev/ttyUSB0",
                                       baudrate=115200,
-                                      bytesize=Serial.EIGHTBITS,
-                                      parity=Serial.PARITY_NONE,
-                                      stopbits=Serial.STOPBITS_ONE,
+                                      bytesize=serial.EIGHTBITS,
+                                      parity=serial.PARITY_NONE,
+                                      stopbits=serial.STOPBITS_ONE,
                                       timeout=3)
     with serial_connection:
         send_at(serial_connection)
