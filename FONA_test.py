@@ -2,6 +2,7 @@
 
 import serial
 import datetime
+import RPi.GPIO as GPIO
 
 
 def send_message(connection: serial.Serial, message: str):
@@ -75,6 +76,17 @@ def list_current_messages(connection: serial.Serial, get_all=True, leave_unread=
         print(err.args[0])
 
 
+def ringer_pin_callback(ringer_pin):
+    print("We got a ring!")
+
+
+def setup_gpio():
+    ri_pin = 26
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(ri_pin, GPIO.IN, pull_up_down=GPIO.PUD.UP)
+    GPIO.add_event_detect(ri_pin, GPIO.FALLING, callback=ringer_pin_callback)
+
+
 def fona_test():
     serial_settings = {"port": "/dev/ttyUSB0",
                        "baudrate": 115200,
@@ -98,6 +110,7 @@ def fona_test():
                      # "AT+CMGF=1",   # Change to text format
                      # "AT+CMGL=\"REC UNREAD\",1",
                      # "AT+CMGL=\"ALL\",1",
+                     "AT+CFGRI?",     # Querry the ringer status.
                      # "AT+CFGRI=1",  # RI pin will go low when SMS received
                      # "AT&W"       # Write out our changes
                      # "ATE1"          # Echo on/off - 0 = no echo
@@ -116,8 +129,12 @@ def fona_test():
 
             list_current_messages(serial_connection, leave_unread=False)
 
+            setup_gpio()
+
     except serial.SerialException as err:
         print(err.args[0])
+    finally:
+        GPIO.cleanup()
 
 
 ############################
