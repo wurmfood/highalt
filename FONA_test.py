@@ -2,8 +2,11 @@
 
 import serial
 import datetime
+import time
 import RPi.GPIO as GPIO
 
+
+message_received = False
 
 def send_message(connection: serial.Serial, message: str):
     # Create our actual message. Strip it of any extra characters
@@ -78,12 +81,14 @@ def list_current_messages(connection: serial.Serial, get_all=True, leave_unread=
 
 def ringer_pin_callback(ringer_pin):
     print("We got a ring!")
+    global message_received
+    message_received = True
 
 
 def setup_gpio():
     ri_pin = 26
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(ri_pin, GPIO.IN, pull_up_down=GPIO.PUD.UP)
+    GPIO.setup(ri_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.add_event_detect(ri_pin, GPIO.FALLING, callback=ringer_pin_callback)
 
 
@@ -130,6 +135,9 @@ def fona_test():
             list_current_messages(serial_connection, leave_unread=False)
 
             setup_gpio()
+
+            while not message_received:
+                time.sleep(1)
 
     except serial.SerialException as err:
         print(err.args[0])
