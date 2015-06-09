@@ -44,7 +44,7 @@ import serial
 #################
 # FONA object
 #################
-class Fona:
+class Fona(object):
     def __init__(self, serial_port=None, serial_connection=None, key_pin=None, power_status_pin=None,
                  network_status_pin=None, reset_pin=None, ring_indicator_pin=None):
         """
