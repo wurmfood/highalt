@@ -154,13 +154,6 @@ class Fona:
             raise AttributeError("'{classname}' object has no "
                                  "attribute '{item}'".format(**locals()))
 
-    def __setattr__(self, key, value):
-        if key in self.__set_commands:
-            return self.__set_value(self.__set_commands[key], value)
-        else:
-            self.__dict__[key] = value
-            return None
-
     @property
     def connected(self):
         return self.__connected
