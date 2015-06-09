@@ -130,7 +130,7 @@ def fona_test():
             txt_message = str(datetime.datetime.isoformat(datetime.datetime.now()))
             send_text_message(serial_connection, my_number, txt_message)
 
-            get_current_network_time(serial_connection)
+            # get_current_network_time(serial_connection)
 
             list_current_messages(serial_connection, leave_unread=False)
 
