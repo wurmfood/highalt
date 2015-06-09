@@ -21,19 +21,15 @@ def send_message(connection: serial.Serial, message: str):
 
 
 def send_text_message(connection: serial.Serial, destination, message: str):
-    cmd = "AT+CMGS=\"".encode("ascii")
-    dest = destination.encode("ascii")
-    close_quote = "\"".encode("ascii")
-    newline = b"\n"
-    msg = message.encode("ascii")
-    ctrl_z = b"\x1A"
+    command = ["AT+CMGS=\"",    # send message command
+               destination,     # Destination phone number
+               "\"",            # Close the quote on the number
+               "\n",            # Newline
+               message,         # The actual message
+               "\x1A"]          # A Ctrl-Z to end.
+
     try:
-        connection.write(cmd)
-        connection.write(dest)
-        connection.write(close_quote)
-        connection.write(newline)
-        connection.write(msg)
-        connection.write(ctrl_z)
+        connection.write("".join(command).encode("ascii"))
 
         # Print out the response
         for line in connection:
@@ -54,6 +50,7 @@ def get_current_network_time(connection: serial.Serial):
 
     # We only actually want the first response.
     # Responses[0] should be the command back, [1] is the answer, [2] is blank, [3] is OK
+    date_and_time = None
     if responses[1][0:7] == "+CCLK: ":
         date_and_time = responses[1][8:len(responses[1])-1]
         print(date_and_time)
