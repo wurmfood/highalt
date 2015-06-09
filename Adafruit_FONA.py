@@ -100,7 +100,6 @@ class Fona:
                                    error_verbosity="AT+CMEE",
                                    use_local_timestamp="AT+CLTS",
                                    ringer="AT+CFGRI",
-                                   echo="ATE"
                                    )
 
         self.__text_msg_commands = dict(list_messages="AT+CMGL",
@@ -120,7 +119,17 @@ class Fona:
                 responses.append(line.decode("ascii"))
             return responses
         else:
-            return None
+            raise serial.SerialException("Not connected to FONA. Can't get attribute.")
+
+    def __set_value(self, key, value):
+        if self.__connected:
+            responses = []
+            self.__my_port.write((key + "=" + value).encode("ascii"))
+            for line in self.__my_port:
+                responses.append(line.decode("ascii"))
+            return responses
+        else:
+            raise serial.SerialException("Not connected to FONA. Can't set attribute.")
 
     def connect(self):
         if not self.__connected:
@@ -132,6 +141,9 @@ class Fona:
             finally:
                 pass
 
+    # A neat way to handle getting attributes. It lets the user query the card for information
+    # without having to provide an explicit function. Of course, this only works if I've already
+    # defined the command needed.
     def __getattr__(self, item):
         if item in self.__status_commands:
             return self.__status_query(self.__status_commands[item])
@@ -142,25 +154,16 @@ class Fona:
             raise AttributeError("'{classname}' object has no "
                                  "attribute '{item}'".format(**locals()))
 
+    def __setattr__(self, key, value):
+        if key in self.__set_commands:
+            return self.__set_value(self.__set_commands[key], value)
+        else:
+            self.__dict__[key] = value
+            return None
+
     @property
     def connected(self):
         return self.__connected
-
-#    @property
-#    def module_name(self):
-#        return self.__status_query(self.__status_commands["ATI"])
-
-#    @property
-#    def network_status(self):
-#        return self.__status_query(self.__status_commands["network_status"])
-
-#    @property
-#    def signal_strength(self):
-#        return self.__status_query(self.__status_commands["signal_strength"])
-
-#    @property
-#    def battery_state(self):
-#        return self.__status_query(self.__status_commands["battery_state"])
 
 
 #################
@@ -178,7 +181,7 @@ print(my_fona.ATI)
 print(my_fona.sim_card_number)
 print(my_fona.network_status)
 print(my_fona.ringer)
-print(my_fona.echo)
+print(my_fona.error_verbosity(1))
 
 # GPIO.cleanup()
 
