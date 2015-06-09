@@ -52,11 +52,15 @@ def get_current_network_time(connection: serial.Serial):
     except serial.SerialException as err:
         print(err.args[0])
 
+    print(responses)
     # We only actually want the first response.
     # Responses[0] should be the command back, [1] is the answer, [2] is blank, [3] is OK
     if responses[1][0:7] == "+CCLK: ":
-        print(responses[1][8:len(responses[1])-1])
-        pass
+        date_and_time = responses[1][8:len(responses[1])-1]
+        print(date_and_time)
+
+    assert isinstance(date_and_time, str)
+    return date_and_time
 
 
 def list_current_messages(connection: serial.Serial, get_all=True, leave_unread=True):
@@ -81,6 +85,8 @@ def list_current_messages(connection: serial.Serial, get_all=True, leave_unread=
 
 def ringer_pin_callback(ringer_pin):
     print("We got a ring!")
+    print(get_current_network_time())
+    time.sleep(.12)
     global message_received
     message_received = True
 
@@ -130,7 +136,7 @@ def fona_test():
             txt_message = str(datetime.datetime.isoformat(datetime.datetime.now()))
             send_text_message(serial_connection, my_number, txt_message)
 
-            # get_current_network_time(serial_connection)
+            get_current_network_time(serial_connection)
 
             list_current_messages(serial_connection, leave_unread=False)
 
