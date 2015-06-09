@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 #####################################################################
 #
 # Module to support the Adafruit FONA vi Python for the Raspberry Pi.
@@ -22,17 +24,22 @@ import serial
 #################
 # Pin Connections
 #################
-KEY_PIN = 5     # Can use with a tie to ground option to turn the FONA on and off.
-PS_PIN = 6      # Power Status: LOW = Off, HIGH = Power on
+# Can use with a tie to ground option to turn the FONA on and off.
+# KEY_PIN = 5
+
+# Power Status: LOW = Off, HIGH = Power on
+# PS_PIN = 6
 
 # Network Status: 64 ms on, 800 off = running, no connection to network
 # 65 ms on, 3 seconds off = Made contact, can send/receive
 # 64 ms on, 300 ms off = GPRS data requested is available
-NS_PIN = 13
+# NS_PIN = 13
 
 # Reset Pin: Pull low for 100 ms to reset
-RESET_PIN = 19
-RI_PIN = 26     # High default, goes low for 120 ms when call received
+# RESET_PIN = 19
+
+# High default, goes low for 120 ms when call received
+# RI_PIN = 26
 
 
 #################
@@ -91,6 +98,7 @@ class Fona:
             self.__my_port.timeout = 3
         finally:
             self.__connected = False
+            self.__connecting = self.__my_port.isOpen()
         # GPIO setup
         # See if we have a mode already
         cur_mode = GPIO.getmode()
@@ -100,6 +108,9 @@ class Fona:
         else:
             # Go with whatever has already been set. We dont' care.
             pass
+
+        # Create a set of used pins
+        self.__used_pins = set()
 
         # Setup the pin connections
         self.__key_pin = key
