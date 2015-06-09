@@ -21,6 +21,9 @@ def send_message(connection: serial.Serial, message: str):
 
 
 def send_text_message(connection: serial.Serial, destination, message: str):
+    if len(message) > 140:
+        print("Message too long. Aborting.")
+        return
     command = ["AT+CMGS=\"",    # send message command
                destination,     # Destination phone number
                "\"",            # Close the quote on the number
