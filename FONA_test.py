@@ -52,7 +52,6 @@ def get_current_network_time(connection: serial.Serial):
     except serial.SerialException as err:
         print(err.args[0])
 
-    print(responses)
     # We only actually want the first response.
     # Responses[0] should be the command back, [1] is the answer, [2] is blank, [3] is OK
     if responses[1][0:7] == "+CCLK: ":
@@ -85,7 +84,6 @@ def list_current_messages(connection: serial.Serial, get_all=True, leave_unread=
 
 def ringer_pin_callback(ringer_pin):
     print("We got a ring!")
-    print(get_current_network_time())
     time.sleep(.12)
     global message_received
     message_received = True
@@ -95,7 +93,7 @@ def setup_gpio():
     ri_pin = 26
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(ri_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.add_event_detect(ri_pin, GPIO.FALLING, callback=ringer_pin_callback)
+    GPIO.add_event_detect(ri_pin, GPIO.FALLING, callback=ringer_pin_callback, bouncetime=200)
 
 
 def fona_test():
@@ -121,7 +119,7 @@ def fona_test():
                      # "AT+CMGF=1",   # Change to text format
                      # "AT+CMGL=\"REC UNREAD\",1",
                      # "AT+CMGL=\"ALL\",1",
-                     "AT+CFGRI?",     # Querry the ringer status.
+                     # "AT+CFGRI?",     # Querry the ringer status.
                      # "AT+CFGRI=1",  # RI pin will go low when SMS received
                      # "AT&W"       # Write out our changes
                      # "ATE1"          # Echo on/off - 0 = no echo
@@ -134,7 +132,7 @@ def fona_test():
 
             my_number = "4158284862"
             txt_message = str(datetime.datetime.isoformat(datetime.datetime.now()))
-            send_text_message(serial_connection, my_number, txt_message)
+            # send_text_message(serial_connection, my_number, txt_message)
 
             get_current_network_time(serial_connection)
 
@@ -149,6 +147,7 @@ def fona_test():
         print(err.args[0])
     finally:
         GPIO.cleanup()
+        pass
 
 
 ############################
