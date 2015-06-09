@@ -15,10 +15,16 @@ def send_ati():
     pass
 
 def check_timestamp_mode():
+    command = "AT+CLTS?"
     pass
 
 def set_local_timestamp_mode():
+    enable_command = "AT+CLTS=1"
+    write_command = "AT&W"
     pass
+
+def get_local_timestamp():
+    command = "AT+CCLK?"
 
 def fona_test():
     serial_connection = serial.Serial(port="/dev/ttyUSB0",
