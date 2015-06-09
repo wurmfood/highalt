@@ -136,7 +136,7 @@ class Fona:
         if item in self.__status_commands:
             return self.__status_query(self.__status_commands[item])
         elif item in self.__set_commands:
-            return self.__status_query(self.__set_commands[item]+"?")
+            return self.__status_query(self.__set_commands[item] + "?")
         else:
             classname = self.__class__.__name__
             raise AttributeError("'{classname}' object has no "
@@ -146,21 +146,21 @@ class Fona:
     def connected(self):
         return self.__connected
 
-    @property
-    def module_name(self):
-        return self.__status_query(self.__status_commands["ATI"])
+#    @property
+#    def module_name(self):
+#        return self.__status_query(self.__status_commands["ATI"])
 
-    @property
-    def network_status(self):
-        return self.__status_query(self.__status_commands["network_status"])
+#    @property
+#    def network_status(self):
+#        return self.__status_query(self.__status_commands["network_status"])
 
-    @property
-    def signal_strength(self):
-        return self.__status_query(self.__status_commands["signal_strength"])
+#    @property
+#    def signal_strength(self):
+#        return self.__status_query(self.__status_commands["signal_strength"])
 
-    @property
-    def battery_state(self):
-        return self.__status_query(self.__status_commands["battery_state"])
+#    @property
+#    def battery_state(self):
+#        return self.__status_query(self.__status_commands["battery_state"])
 
 
 #################
@@ -169,14 +169,16 @@ class Fona:
 
 # Only for testing. Remove later.
 SERIAL_PORT = "/dev/ttyUSB0"
-
+GPIO.setmode(GPIO.BCM)
 my_fona = Fona(SERIAL_PORT)
 my_fona.connect()
 
 print(my_fona.AT)
 print(my_fona.ATI)
 print(my_fona.sim_card_number)
-print(my_fona.module_name)
 print(my_fona.network_status)
 print(my_fona.ringer)
 print(my_fona.echo)
+
+# GPIO.cleanup()
+
