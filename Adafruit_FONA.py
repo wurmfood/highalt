@@ -44,7 +44,7 @@ import serial
 #################
 # FONA object
 #################
-class Fona:
+class Fona(object):
     def __init__(self, serial_port=None, serial_connection=None, key_pin=None, power_status_pin=None,
                  network_status_pin=None, reset_pin=None, ring_indicator_pin=None):
         """
@@ -153,13 +153,6 @@ class Fona:
             classname = self.__class__.__name__
             raise AttributeError("'{classname}' object has no "
                                  "attribute '{item}'".format(**locals()))
-
-    def __setattr__(self, key, value):
-        if key in self.__set_commands:
-            return self.__set_value(self.__set_commands[key], value)
-        else:
-            super().__setattr__(key, value)
-            return None
 
     @property
     def connected(self):
