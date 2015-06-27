@@ -28,12 +28,12 @@ import serial
 #################
 # Text message object
 #################
-class Fona_message(object):
+class FonaMessage(object):
     def __init__(self, raw_text_message):
         self.__sender_number, self.__text_message = self.__parse(raw_text_message)
 
     @staticmethod
-    def __parse(self, raw_text_message):
+    def __parse(raw_text_message):
         # These are fake numbers for the moment. TODO: Get the real numbers in here.
         return raw_text_message[0:8], raw_text_message[9:]
 
@@ -44,6 +44,7 @@ class Fona_message(object):
     @property
     def text_message(self):
         return self.__text_message
+
 
 #################
 # FONA object
