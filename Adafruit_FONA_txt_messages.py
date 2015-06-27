@@ -112,6 +112,7 @@ class Fona(object):
                                         )
 
         # Finally, some commands we're going to do simply because all we care about is text messaging
+        self.__status_query(self.__status_commands['AT '])
         self.__set_value(self.__text_msg_commands['text_message_format'], 1)
         self.__set_value(self.__set_commands['ringer'], 1)
         self.__set_value(self.__set_commands['use_local_timestamp'], 1)
@@ -169,11 +170,6 @@ class Fona(object):
 
     def list_current_text_messages(self, include_read=False, leave_unread=False):
         if self.__connected:
-            # Make sure we're in the correct format:
-            self.__set_value(self.__set_commands['text_message_format'], 1)
-            for line in self.__my_port:
-                # read and toss the lines
-                pass
             msg = [self.__text_msg_commands['list_messages'],
                    "="]
             if include_read:
@@ -238,7 +234,7 @@ print(my_fona.ATI)
 print(my_fona.sim_card_number)
 print(my_fona.network_status)
 print(my_fona.ringer)
-print(my_fona.set_fona_option("error_verbosity", 2))
+print(my_fona.set_fona_option("error_verbosity", str(2)))
 print(my_fona.list_current_text_messages())
 # GPIO.cleanup()
 print(my_fona.send_text_message(4158284862, "This is a test message."))
