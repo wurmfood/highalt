@@ -113,7 +113,7 @@ class Fona(object):
 
         # Finally, some commands we're going to do simply because all we care about is text messaging
         self.__status_query(self.__status_commands['AT'])
-        self.__set_value(self.__text_msg_commands['text_message_format'], 1)
+        self.__set_value(self.__set_commands['text_message_format'], 1)
         self.__set_value(self.__set_commands['ringer'], 1)
         self.__set_value(self.__set_commands['use_local_timestamp'], 1)
 
