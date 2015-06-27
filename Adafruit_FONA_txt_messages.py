@@ -134,7 +134,7 @@ class Fona(object):
     def __set_value(self, key, value):
         if self.__connected:
             responses = []
-            self.__my_port.write((key + "=" + value).encode("ascii"))
+            self.__my_port.write((key + "=" + str(value)).encode("ascii"))
             for line in self.__my_port:
                 responses.append(line.decode("ascii"))
             return responses
