@@ -18,10 +18,7 @@
 #################
 # Includes
 #################
-try:
-    import RPi.GPIO as GPIO
-except:
-    pass
+# import RPi.GPIO as GPIO
 import serial
 
 
@@ -30,16 +27,44 @@ import serial
 #################
 class FonaMessage(object):
     def __init__(self, raw_text_message):
-        self.__sender_number, self.__text_message = self.__parse(raw_text_message)
+        self.__parse(raw_text_message)
 
-    @staticmethod
-    def __parse(raw_text_message):
-        # These are fake numbers for the moment. TODO: Get the real numbers in here.
-        return raw_text_message[0:8], raw_text_message[9:]
+    def __parse(self, raw_text_message):
+        # raw_text_message will have two lines. The first is headers, the second the message.
+        # Headers are a comma seperated list.
+        headers = raw_text_message[0].split(",")
+        # Response includes '+CMGL: ' before the message number. Strip that part.
+        self.__msg_number = headers[0][7:]
+        # Get rid of the "+ at the front and " at the end.
+        self.__sender_number = headers[2].replace("+", "").replace('\"', '')
+        # Date and time are separate. Join them together.
+        self.__msg_date = ", ".join(headers[4:])
+        # The text message is the second part. Replace carriage returns with carriage return + newline.
+        self.__text_message = raw_text_message[1].replace("\r", "\r\n")
+
+    def __str__(self):
+        return "Message Number: {0}\r\nSender: {1}\r\nDate: {2}\r\nMessage: {3}\r\n".format(self.__msg_number,
+                                                                                            self.__sender_number,
+                                                                                            self.__msg_date,
+                                                                                            self.__text_message)
+
+    def __repr__(self):
+        return "Message Number: {0}\r\nSender: {1}\r\nDate: {2}\r\nMessage: {3}\r\n".format(self.__msg_number,
+                                                                                            self.__sender_number,
+                                                                                            self.__msg_date,
+                                                                                            self.__text_message)
 
     @property
     def sender_number(self):
         return self.__sender_number
+
+    @property
+    def message_number(self):
+        return self.__msg_number
+
+    @property
+    def message_date(self):
+        return self.__msg_date
 
     @property
     def text_message(self):
@@ -81,8 +106,8 @@ class Fona(object):
             self.__connected = self.__my_port.isOpen()
 
         # GPIO setup is up to the user. We'll warn if it's not done already, but we just care about numbers.
-        if GPIO and GPIO.getmode() == GPIO.UNKNOWN:
-            print("Warning: GPIO mode not set. Results unpredictable.")
+        # if GPIO.getmode() == GPIO.UNKNOWN:
+        #    print("Warning: GPIO mode not set. Results unpredictable.")
 
         # Create a set of used pins
         self.__pins = {"key": key_pin,
@@ -109,7 +134,8 @@ class Fona(object):
 
         self.__text_msg_commands = dict(list_messages="AT+CMGL",
                                         delete_message="",
-                                        send_message="AT+CMGS"
+                                        send_message="AT+CMGS",
+                                        retrieve_message="AT+CMGR"
                                         )
 
         # Finally, some commands we're going to do simply because all we care about is text messaging
@@ -123,6 +149,7 @@ class Fona(object):
 
         :rtype : list
         """
+        # print(cmd)
         if self.__connected:
             responses = []
             self.__my_port.write((cmd + "\n").encode("ascii"))
@@ -133,9 +160,10 @@ class Fona(object):
             raise serial.SerialException("Not connected to FONA. Can't get attribute.")
 
     def __set_value(self, key, value):
+        # print("{0}: {1}".format(key, value))
         if self.__connected:
             responses = []
-            self.__my_port.write((key + "=" + str(value)).encode("ascii"))
+            self.__my_port.write((key + "=" + str(value) + "\n").encode("ascii"))
             for line in self.__my_port:
                 responses.append(line.decode("ascii"))
             return responses
@@ -179,7 +207,7 @@ class Fona(object):
                 msg.append('\"REC UNREAD\",')
             msg.append(str(int(leave_unread)))
             msg.append("\n")
-            return self.__status_query("".join(msg).encode("ascii"))
+            return self.__status_query("".join(msg))
         else:
             raise serial.SerialException("Not connected to FONA. Can't read text messages.")
 
@@ -188,20 +216,14 @@ class Fona(object):
             print("Message too long. Aborting.")
             return 0
         command = ["AT+CMGS=\"",    # send message command
-                   destination_number,     # Destination phone number
+                   str(destination_number),     # Destination phone number
                    "\"",            # Close the quote on the number
                    "\n",            # Newline
                    message,         # The actual message
                    "\x1A"]          # A Ctrl-Z to end.
 
         try:
-            self.__my_port.write("".join(command).encode("ascii"))
-
-            # Print out the response
-            response = []
-            for line in self.__my_port:
-                response.append(line.rstrip().decode("ascii"))
-            return response
+            return self.__status_query("".join(command))
         except serial.SerialException as err:
             print(err.args[0])
             return 0
@@ -225,18 +247,33 @@ class Fona(object):
 
 # Only for testing. Remove later.
 SERIAL_PORT = "/dev/ttyUSB0"
-if GPIO:
-    GPIO.setmode(GPIO.BCM)
+# GPIO.setmode(GPIO.BCM)
 my_fona = Fona(SERIAL_PORT)
 my_fona.connect()
 
-print(my_fona.AT)
-print(my_fona.ATI)
-print(my_fona.sim_card_number)
-print(my_fona.network_status)
-print(my_fona.ringer)
-print(my_fona.set_fona_option("error_verbosity", str(2)))
-print(my_fona.list_current_text_messages())
+# print(my_fona.ATI)
+# print(my_fona.sim_card_number)
+# print(my_fona.network_status)
+# print(my_fona.ringer)
+# print(my_fona.list_current_text_messages())
 # GPIO.cleanup()
-print(my_fona.send_text_message(4158284862, "This is a test message."))
-print(my_fona.list_current_text_messages(include_read=True, leave_unread=True))
+# print(my_fona.send_text_message(4158284862, "This is a test message."))
+# print(messages)
+response = []
+for line in my_fona.list_current_text_messages(include_read=False, leave_unread=True):
+    # Don't include lines that are only \r\n.
+    if not str.isspace(line):
+        # Strip off extra \r\n at the end of each.
+        response.append(line.rstrip())
+msgs = []
+for i in range(0, int((len(response) - 1)/2)):
+    msgs.append(FonaMessage(response[2*i:2*i+2]))
+
+import datetime
+for msg in msgs:
+    print(msg)
+    destination = msg.sender_number
+    print(destination)
+    text_response = datetime.datetime.now().isoformat()
+    print(text_response)
+    print(my_fona.send_text_message(destination, text_response))
