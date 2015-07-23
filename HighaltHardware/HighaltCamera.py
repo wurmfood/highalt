@@ -45,13 +45,13 @@ class CameraThread (threading.Thread):
                 camera.framerate = 30
                 # Record a sequence of videos
                 for filename in camera.record_sequence(
-                        (self.gen_paths('%08d.h264' % i for i in range(0, self.__video_count))),
+                        (self.gen_paths('%08d.h264' % i for i in range(0, int(self.__video_count)))),
                         quality=20):
                     logging.debug('Camera Thread: Recording to file: {0}'.format(filename))
                     if self.__stop:
                         break
                     else:
-                        camera.wait_recording(self.__video_duration)
+                        camera.wait_recording(int(self.__video_duration))
         except threading.ThreadError as err:
             logging.warning('Camera Thread: Caught an exception. Closing thread.')
             logging.warning('Camera Thread: Exception: {0}'.format(err.args[0]))
@@ -93,9 +93,10 @@ class CamThreadSupervisor (threading.Thread):
 
 if __name__ == "__main__":
     import getopt
+    from time import sleep
 
     debugLevel = logging.DEBUG
-    logging.basicConfig(stream=logging.StreamHandler(),
+    logging.basicConfig(stream=sys.stderr,
                         format='%(asctime)s %(levelname)s:%(message)s',
                         level=debugLevel)
 
@@ -143,4 +144,5 @@ if __name__ == "__main__":
     output, duration, count = process_args(sys.argv[1:])
     sup = CamThreadSupervisor(output, duration, count)
     sup.start()
-    sup.join()
+    sleep(30)
+    sup.stop()
