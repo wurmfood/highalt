@@ -142,3 +142,5 @@ if __name__ == "__main__":
 
     output, duration, count = process_args(sys.argv[1:])
     sup = CamThreadSupervisor(output, duration, count)
+    sup.start()
+    sup.join()
