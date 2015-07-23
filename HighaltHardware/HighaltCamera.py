@@ -76,9 +76,9 @@ class CamThreadSupervisor (threading.Thread):
         while not self.__stop:
             # Create a new directory
             path = os.path.join(self.video_directory, '{:04d}'.format(self.__curThreadNum))
-            logging.info("Cam Supervisor: Using directory: {1}".format(path))
+            logging.info("Cam Supervisor: Using directory: {0}".format(path))
             # Create a thread
-            logging.info("Cam Supervisor: Starting new thread, number {1}".format(self.__curThreadNum))
+            logging.info("Cam Supervisor: Starting new thread, number {0}".format(self.__curThreadNum))
             self.__curThread = CameraThread(path, self.video_duration, self.video_count)
             # Start the thread
             logging.info("Cam Supervisor: Starting thread.")
@@ -124,7 +124,7 @@ if __name__ == "__main__":
                 print(usage)
             elif opt == "-n":
                 num = arg
-                print("{0} videos will be recorded.")
+                print("{0} videos will be recorded.".format(arg))
             elif opt == "-t":
                 dur = arg
                 print('Video duration: {0} sec'.format(arg))
