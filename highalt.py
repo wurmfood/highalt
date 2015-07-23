@@ -7,7 +7,9 @@ import datetime
 import threading
 import logging
 import sys
+import HighaltHardware.AdafruitFONA as FONA
 
+fona = FONA.Fona()
 
 # Setup a variable to control if we're supposed to be shutting down.
 shutdown = False
