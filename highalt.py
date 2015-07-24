@@ -65,69 +65,12 @@ logging.info('Sensor dir: {0}'.format(sDir))
 usingCamera = False
 if os.name != 'nt':
     logging.info('Enabling camera.')
-    import picamera
     usingCamera = True
 else:
     logging.info('On Windows, so no camera enabled.')
 
 logging.info('Camera enabled: {0}'.format(usingCamera))
 
-# Counter to keep track of which subdirectory we're in for the camera
-cameraSubDirNum = 0
-
-
-# Define our camera thread
-# if usingCamera:
-class CameraThread (threading.Thread):
-    def __init__(self, instance_num):
-        logging.debug('Creating new camera thread.')
-        threading.Thread.__init__(self)
-        self.threadPath = os.path.join(vDir, '{:04d}'.format(instance_num))
-        logging.info('Creating new directory for video: {0}'.format(self.threadPath))
-        os.mkdir(self.threadPath)
-
-    def gen_paths(self, file_list):
-        tmp_array = []
-        for i in file_list:
-            tmp_array.append(os.path.join(self.threadPath, i))
-        return list(tmp_array)
-
-    def run(self):
-        # Start a camera instance
-        logging.debug('Camera thread running.')
-        try:
-            with picamera.PiCamera() as camera:
-                logging.debug('Camera instance created. Setting options.')
-                # Setup basic options
-                camera.vflip = True
-                camera.hflip = True
-                # 480p
-                # camera.resolution = (720, 480)
-                # 720p
-                camera.resolution = (1280, 720)
-                # 1080p
-                # camera.resolution = (1920, 1080)
-                camera.framerate = 30
-                # Record a sequence of videos
-                for filename in camera.record_sequence(
-                        (self.gen_paths('%08d.h264' % i for i in range(1, 36))),
-                        quality=20):
-                    logging.debug('Camera Thread: Recording to file: {0}'.format(filename))
-                    global shutdown
-                    if shutdown:
-                        break
-                    else:
-                        camera.wait_recording(600)
-        except KeyboardInterrupt:
-            logging.warning("Camera Thread: Received keyboard interrupt. Shutting down camera thread.")
-            global usingCamera
-            global shutdown
-            shutdown = True
-            usingCamera = False
-        except:
-            logging.warning('Camera Thread: Caught an exception. Closing thread.')
-            for i in sys.exc_info():
-                logging.warning('Camera Thread: Exception: {0}'.format(i))
 
 
 ##############################
