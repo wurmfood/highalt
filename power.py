@@ -17,7 +17,7 @@ import os
 #
 # For this to work, connect the following:
 #
-# 22    ----- 330 ohm ---|
+# 17    ----- 330 ohm ---|
 #                        |
 # 3.3 V ------ 10k ohm --|
 #                        |
@@ -28,9 +28,9 @@ import os
 #
 # Normally, the 3.3 V will keep pin 25 high. However,
 # on pushing the button, the 3.3 V will go to ground and
-# pin 22 will go to low.
+# pin 17 will go to low.
 #
-# Note that pin 22 = board pin 15
+# Note that pin 17 = board pin 15?
 # Pin 3.3 V = board pin 17
 # Pin GND = board pins 25, 20, 14
 #
@@ -40,7 +40,7 @@ import os
 real_shutdown_cmd = "shutdown -h now"
 
 # Pin to use for power detection
-POWERPIN = 22
+POWERPIN = 17
 
 
 ############################
