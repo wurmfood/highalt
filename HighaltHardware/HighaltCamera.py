@@ -10,12 +10,12 @@ import picamera
 # Define our camera thread
 class CameraThread (threading.Thread):
     def __init__(self, output_directory, video_duration, video_count):
-        logging.debug('Creating new camera thread.')
+        logging.debug('Camera Thread: Creating new camera thread.')
         threading.Thread.__init__(self)
         self.__threadPath, self.__video_duration, self.__video_count = output_directory, video_duration, video_count
         self.__stop = False
         # self.threadPath = os.path.join(output_directory, '{:04d}'.format(instance_num))
-        logging.info('Creating new directory for video: {0}'.format(self.__threadPath))
+        logging.info('Camera Thread: Creating new directory for video: {0}'.format(self.__threadPath))
         os.mkdir(self.__threadPath)
 
     def stop(self):
@@ -29,10 +29,10 @@ class CameraThread (threading.Thread):
 
     def run(self):
         # Start a camera instance
-        logging.debug('Camera thread running.')
+        logging.debug('Camera Thread: Camera thread running.')
         try:
             with picamera.PiCamera() as camera:
-                logging.debug('Camera instance created. Setting options.')
+                logging.debug('Camera Thread: Camera instance created. Setting options.')
                 # Setup basic options
                 camera.vflip = True
                 camera.hflip = True
@@ -100,7 +100,7 @@ if __name__ == "__main__":
                         format='%(asctime)s %(levelname)s:%(message)s',
                         level=debugLevel)
 
-    def process_args(inArgs):
+    def process_args(inargs):
         out = os.getcwd()
         dur = 5
         num = 4
@@ -112,7 +112,7 @@ if __name__ == "__main__":
 
         try:
             # allow -o or --outDir, -t or --time, -n or --num, and -h.
-            opts, args = getopt.getopt(inArgs, "ho:t:n:", ["outDir", "time", "num"])
+            opts, args = getopt.getopt(inargs, "ho:t:n:", ["outDir", "time", "num"])
 
         except getopt.GetoptError as err:
             print(err.msg)

@@ -94,9 +94,9 @@ class ArduinoDataThread (Thread):
         x = to_parse.split(",")
         for l in x:
             self.headers.append(l)
-        logging.debug('Parsing headers.')
-        logging.debug('Before: {0}'.format(to_parse))
-        logging.debug('After: {0}'.format(self.headers))
+        logging.debug('Data Thread: Parsing headers.')
+        logging.debug('Data Thread: Before: {0}'.format(to_parse))
+        logging.debug('Data Thread: After: {0}'.format(self.headers))
 
 
 class ArduinoThreadSupervisor (Thread):
@@ -121,7 +121,7 @@ class ArduinoThreadSupervisor (Thread):
     # If we have a connection, reset the Arduino by toggling DTR
     def __reset_arduino(self):
         if self.__serial_connection.isOpen():
-            logging.debug('Resetting connection to Arduino.')
+            logging.debug('Arduino Supervisor: Resetting connection to Arduino.')
             self.__serial_connection.setDTR(True)
             sleep(1)
             self.__serial_connection.setDTR(False)
@@ -134,15 +134,15 @@ class ArduinoThreadSupervisor (Thread):
     # a new thread.
     def __setup_serial_connection(self):
         try:
-            logging.debug('Setting up connection on {0}'.format(self.__port))
+            logging.debug('Arduino Supervisor: Setting up connection on {0}'.format(self.__port))
             self.__serial_connection.port = self.__port
             self.__serial_connection.baudrate = 115200
             self.__serial_connection.stopbits = STOPBITS_ONE
             self.__serial_connection.bytesize = EIGHTBITS
             self.__serial_connection.parity = PARITY_NONE
             self.__serial_connection.timeout = 2
-        except SerialException as errn:
-            logging.warning("Serial Error: {0}".format(errn))
+        except SerialException as err:
+            logging.warning("Arduino Supervisor: Serial Error: {0}".format(err))
 
     def run(self):
         # Try to establish a connection to the Arduino
@@ -153,20 +153,24 @@ class ArduinoThreadSupervisor (Thread):
                 self.__serial_connection.open()
                 if self.__serial_connection.isOpen():
                     logging.debug("Arduino Supervisor: Connection open.")
+                    # Reset the Arduino:
+                    self.__reset_arduino()
+                    # Set up a data thread:
+                    self.__current_thread = ArduinoDataThread(self.__serial_connection,
+                                                              self.__out_dir,
+                                                              self.sensor_headers)
+                    # Start the thread
+                    self.__current_thread.start()
+                    # Join
+                    self.__current_thread.join()
                 else:
                     logging.debug("Arduino Supervisor: Connection failed to open.")
-                # Reset the Arduino:
-                self.__reset_arduino()
-                # Set up a data thread:
-                self.__current_thread = ArduinoDataThread(self.__serial_connection, self.__out_dir, self.sensor_headers)
-                # Start the thread
-                self.__current_thread.start()
-                # Join
-                self.__current_thread.join()
-                self.__stop = True
             except KeyboardInterrupt:
                 logging.warning('Arduino Supervisor: Received keyboard interrupt.')
                 self.__stop = True
+            finally:
+                logging.info("Arduino Supervisor: Closing the serial connection before exiting.")
+                self.__serial_connection.close()
 
 
 if __name__ == "__main__":
@@ -178,7 +182,7 @@ if __name__ == "__main__":
                         format='%(asctime)s %(levelname)s:%(message)s',
                         level=debugLevel)
 
-    def process_args(inArgs):
+    def process_args(inargs):
         # Automatically select the correct port for the OS.
         out = os.getcwd()
         port = 'COM3' if os.name == 'nt' else '/dev/ttyACM0'
@@ -189,7 +193,7 @@ if __name__ == "__main__":
 
         try:
             # allow -o or --outDir, -t or --time, -n or --num, and -h.
-            opts, args = getopt.getopt(inArgs, "ho:p:", ["outDir", "port"])
+            opts, args = getopt.getopt(inargs, "ho:p:", ["outDir", "port"])
 
         except getopt.GetoptError as err:
             print(err.msg)
@@ -215,8 +219,8 @@ if __name__ == "__main__":
 
         return out, port
 
-    output_dir, port = process_args(sys.argv[1:])
-    sup = ArduinoThreadSupervisor(port, output_dir)
+    out_dir, serial_port = process_args(sys.argv[1:])
+    sup = ArduinoThreadSupervisor(serial_port, out_dir)
     sup.start()
     sleep(1)
     sup.stop()
