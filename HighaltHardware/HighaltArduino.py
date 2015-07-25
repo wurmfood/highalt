@@ -27,6 +27,9 @@ class ArduinoDataThread (Thread):
         self.__stop = False
         logging.debug('Data Thread: New logging thread created.')
 
+    def stop(self):
+        self.__stop = True
+
     def run(self):
         try:
             # If we haven't been told to shut down:
@@ -114,9 +117,21 @@ class ArduinoThreadSupervisor (Thread):
 
     def stop(self):
         self.__stop = True
+        self.__current_thread.stop()
 
     def last_line(self):
         return self.__current_thread.last_received_line
+
+    @property
+    def current_gps_coords(self):
+        # Sure, not as efficient as it could be, but this is more readable.
+        # We should probably check to see if we're actually sending numbers, but the only other option
+        # is that we happen to time it right after the Arduino is reset, in which case it'll probably be either
+        # blank or "Latitude, Longitude". In either case it's not harmful.
+        data_array = str.split(self.last_line(), ',')
+        # That's really only two parts out of the array (spots 4 and 5). Slices go up to the last number, not
+        # including it.
+        return "{0}, {1}".format(*data_array[4:6])
 
     # If we have a connection, reset the Arduino by toggling DTR
     def __reset_arduino(self):
@@ -162,12 +177,17 @@ class ArduinoThreadSupervisor (Thread):
                     # Start the thread
                     self.__current_thread.start()
                     # Join
-                    self.__current_thread.join()
+                    # The while not part here is so we can test this and give the join a timeout.
+                    # That way a keyboard interrupt actually works on it.
+                    while not self.__stop:
+                        # Checking every five seconds works for testing. I'll probably boost this later.
+                        self.__current_thread.join(5)
                 else:
                     logging.debug("Arduino Supervisor: Connection failed to open.")
             except KeyboardInterrupt:
                 logging.warning('Arduino Supervisor: Received keyboard interrupt.')
                 self.__stop = True
+                self.__current_thread.stop()
             finally:
                 logging.info("Arduino Supervisor: Closing the serial connection before exiting.")
                 self.__serial_connection.close()
@@ -177,7 +197,7 @@ if __name__ == "__main__":
     import getopt
     import sys
 
-    debugLevel = logging.DEBUG
+    debugLevel = logging.INFO
     logging.basicConfig(stream=sys.stderr,
                         format='%(asctime)s %(levelname)s:%(message)s',
                         level=debugLevel)
@@ -221,6 +241,12 @@ if __name__ == "__main__":
 
     out_dir, serial_port = process_args(sys.argv[1:])
     sup = ArduinoThreadSupervisor(serial_port, out_dir)
-    sup.start()
-    sleep(1)
-    sup.stop()
+    try:
+        sup.start()
+        sleep(3)
+        for i in range(1, 5):
+            print("{0}: {1}".format(i, sup.current_gps_coords))
+            sleep(10)
+        sup.stop()
+    except KeyboardInterrupt:
+        sup.stop()
