@@ -20,6 +20,9 @@
 #################
 # import RPi.GPIO as GPIO
 import serial
+import logging
+from threading import Thread
+from time import sleep
 
 
 #################
@@ -32,7 +35,9 @@ class FonaMessage(object):
     def __parse(self, raw_text_message):
         # raw_text_message will have two lines. The first is headers, the second the message.
         # Headers are a comma seperated list.
+        logging.debug("Raw message: {0}".format(raw_text_message))
         headers = raw_text_message[0].split(",")
+        logging.debug("Headers: {0}".format(headers))
         # Response includes '+CMGL: ' before the message number. Strip that part.
         self.__msg_number = headers[0][7:]
         # Get rid of the "+ at the front and " at the end.
@@ -75,19 +80,14 @@ class FonaMessage(object):
 # FONA object
 #################
 class Fona(object):
-    def __init__(self, serial_port=None, serial_connection=None, key_pin=None, power_status_pin=None,
-                 network_status_pin=None, reset_pin=None, ring_indicator_pin=None):
+    def __init__(self, serial_port=None, serial_connection=None):
         """
         Initializer for the Fona class.
         :param serial_port:  Physical port FONA is connected to.
         :param serial_connection: Existing serial connection to use.
-        :param key_pin: Pin the Key pin is connected to.
-        :param power_status_pin: Pin the Power Status (PS) pin is connected to.
-        :param network_status_pin: Pin the Network Status (NS) pin is connected to.
-        :param reset_pin: Pin the Reset pin is connected to.
-        :param ring_indicator_pin: Pin the Ring Indicator (RI) pin is connected to.
         :return:
         """
+        logging.debug("FONA: Creating FONA object.")
         # Setup the serial connection
         serial_settings = {"port": serial_port,
                            "baudrate": 115200,
@@ -98,23 +98,23 @@ class Fona(object):
         try:
             # If we are handed an existing serial connection, take it.
             if serial_connection:
+                logging.debug("FONA: Serial connection provided.")
                 self.__my_port = serial_connection
             else:
                 # Otherwise, make our own.
+                logging.debug("FONA: Creating serial connection.")
                 self.__my_port = serial.Serial(**serial_settings)
+        except FileNotFoundError as err:
+            logging.warning("FONA: Supplied port does not exist: {0}".format(serial_port))
+            logging.debug("FONA: Error: {0}".format(err.args))
+            self.__my_port.close()
         finally:
+            logging.debug("FONA: Connection status: {0}".format(self.__my_port.isOpen()))
             self.__connected = self.__my_port.isOpen()
 
         # GPIO setup is up to the user. We'll warn if it's not done already, but we just care about numbers.
         # if GPIO.getmode() == GPIO.UNKNOWN:
         #    print("Warning: GPIO mode not set. Results unpredictable.")
-
-        # Create a set of used pins
-        self.__pins = {"key": key_pin,
-                       "power_status": power_status_pin,
-                       "network_status": network_status_pin,
-                       "reset": reset_pin,
-                       "ring_indicator": ring_indicator_pin}
 
         self.__status_commands = dict(AT="AT",
                                       ATI="ATI",
@@ -151,10 +151,12 @@ class Fona(object):
         """
         # print(cmd)
         if self.__connected:
+            # logging.debug("FONA: Status query: {0}".format(cmd))
             responses = []
             self.__my_port.write((cmd + "\n").encode("ascii"))
             for line in self.__my_port:
                 responses.append(line.decode("ascii"))
+            # logging.debug("FONA: Query response: {0}".format(responses))
             return responses
         else:
             raise serial.SerialException("Not connected to FONA. Can't get attribute.")
@@ -174,11 +176,21 @@ class Fona(object):
         if not self.__connected:
             try:
                 self.__my_port.open()
+            finally:
                 # Send a newline, then an AT to get things started.
                 self.__status_query("\n" + self.__status_commands["AT"])
-                self.__connected = True
+                self.__connected = self.__my_port.isOpen()
+
+    def disconnect(self):
+        if self.__connected:
+            try:
+                self.__my_port.close()
+                self.__connected = self.__my_port.isOpen()
             finally:
                 pass
+
+    def keep_alive(self):
+        self.__status_query(self.__status_commands['AT'])
 
     # A neat way to handle getting attributes. It lets the user query the card for information
     # without having to provide an explicit function. Of course, this only works if I've already
@@ -197,23 +209,35 @@ class Fona(object):
     def connected(self):
         return self.__connected
 
-    def list_current_text_messages(self, include_read=False, leave_unread=False):
+    def get_current_text_messages(self, include_read=False, leave_unread=False):
         if self.__connected:
-            msg = [self.__text_msg_commands['list_messages'],
+            cmd = [self.__text_msg_commands['list_messages'],
                    "="]
             if include_read:
-                msg.append('\"ALL\",')
+                cmd.append('\"ALL\",')
             else:
-                msg.append('\"REC UNREAD\",')
-            msg.append(str(int(leave_unread)))
-            msg.append("\n")
-            return self.__status_query("".join(msg))
+                cmd.append('\"REC UNREAD\",')
+            cmd.append(str(int(leave_unread)))
+            cmd.append("\n")
+            raw_messages = self.__status_query("".join(cmd))
+            trimmed_messages = []
+            for line in raw_messages:
+                if not str.startswith(line, "AT+CMGL"):
+                    # Don't include lines that are only \r\n.
+                    if not str.isspace(line):
+                        # Strip off extra \r\n at the end of each line
+                        trimmed_messages.append(line.rstrip())
+
+            messages = []
+            for i in range(0, int((len(trimmed_messages) - 1)/2)):
+                messages.append(FonaMessage(trimmed_messages[2*i:2*i+2]))
+            return messages
         else:
             raise serial.SerialException("Not connected to FONA. Can't read text messages.")
 
     def send_text_message(self, destination_number, message):
         if len(message) > 140:
-            print("Message too long. Aborting.")
+            logging.warning("Message too long. Aborting.")
             return 0
         command = ["AT+CMGS=\"",    # send message command
                    str(destination_number),     # Destination phone number
@@ -225,55 +249,100 @@ class Fona(object):
         try:
             return self.__status_query("".join(command))
         except serial.SerialException as err:
-            print(err.args[0])
+            logging.warning(err.args[0])
             return 0
 
-    def set_callback_on_pin(self, callback_function, pin):
-        """
-        Setup a callback using a named pin.
 
-        Setup a callback on one of the following pins: key, power_status, network_status, reset, or ring_indicator.
+#################
+# FONA control thread
+#################
+class FonaThread (Thread):
+    def __init__(self, serial_port, ring_indicator_pin=None, gps_cood_locaiton=None):
+        super().__init__(self)
+        self.__fona_port = serial_port
+        self.__ring_pin = ring_indicator_pin
+        self.__gps_coords = gps_cood_locaiton
+        self.__stop = False
+        self.__fona = Fona(serial_port=self.__fona_port)
+        # Using this as a semaphore for the moment. It's not the best way, but I'll look into that later.
+        self.__ser_in_use = False
 
-        :param callback_function:
-        :param pin:
-        :return:
-        """
+    def stop(self):
+        self.__stop = True
+
+    def __connect_to_fona(self):
+        self.__fona.connect()
+
+    def __get_last_text_message(self):
+        return self.__fona.get_current_text_messages(False, False)
+
+    def __send_response(self, destination_number, message_content):
+        self.__fona.send_text_message(destination_number, message_content)
+
+    def __ring_callback(self, channel):
+        if not self.__ser_in_use:
+            for msg in self.__get_last_text_message():
+                # Kind of arbitrary, but allows for a number to be 9 or 10 digits
+                # Prevent us from sending a message to auto-texts (like from the carrier)
+                if len(msg.sender_number) > 8:
+                    self.__send_response(msg.sender_number, self.__gps_coords)
+        else:
+            sleep(1)
+
+    def __setup_callback(self):
+        # GPIO.add_event_detect(self.__ring_pin, GPIO.FALLING, callback=self.__ring_callback)
+        pass
+
+    def run(self):
+        try:
+            while not self.__stop:
+                if not self.__fona.connected:
+                    self.__fona.connect()
+                self.__ser_in_use = True
+                self.__fona.keep_alive()
+                self.__ser_in_use = False
+                sleep(5)
+        finally:
+            self.__fona.disconnect()
         pass
 
 
 #################
 # Test FONA
 #################
+def fona_main():
+    # Only for testing. Remove later.
+    SERIAL_PORT = "/dev/ttyUSB0"
+    # GPIO.setmode(GPIO.BCM)
+    my_fona = Fona(SERIAL_PORT)
+    try:
+        my_fona.connect()
 
-# Only for testing. Remove later.
-SERIAL_PORT = "/dev/ttyUSB0"
-# GPIO.setmode(GPIO.BCM)
-my_fona = Fona(SERIAL_PORT)
-my_fona.connect()
+        print("ATI: {0}".format(my_fona.ATI))
+        print("Sim Card Number: {0}".format(my_fona.sim_card_number))
+        print("Network Status: {0}".format(my_fona.network_status))
+        print("Ringer: {0}".format(my_fona.ringer))
+        # GPIO.cleanup()
 
-# print(my_fona.ATI)
-# print(my_fona.sim_card_number)
-# print(my_fona.network_status)
-# print(my_fona.ringer)
-# print(my_fona.list_current_text_messages())
-# GPIO.cleanup()
-# print(my_fona.send_text_message(4158284862, "This is a test message."))
-# print(messages)
-response = []
-for line in my_fona.list_current_text_messages(include_read=False, leave_unread=True):
-    # Don't include lines that are only \r\n.
-    if not str.isspace(line):
-        # Strip off extra \r\n at the end of each.
-        response.append(line.rstrip())
-msgs = []
-for i in range(0, int((len(response) - 1)/2)):
-    msgs.append(FonaMessage(response[2*i:2*i+2]))
+        # import datetime
+        msgs = my_fona.get_current_text_messages(include_read=False, leave_unread=True)
+        for msg in msgs:
+            print(msg)
+            # text_response = datetime.datetime.now().isoformat()
+            # print(text_response)
+            # print(my_fona.send_text_message(destination, text_response))
 
-import datetime
-for msg in msgs:
-    print(msg)
-    destination = msg.sender_number
-    print(destination)
-    text_response = datetime.datetime.now().isoformat()
-    print(text_response)
-    print(my_fona.send_text_message(destination, text_response))
+    except serial.SerialTimeoutException as err:
+        print("Error: {0}".format(err))
+    except serial.SerialException as err:
+        print("Error: {0}".format(err))
+
+
+if __name__ == "__main__":
+    import sys
+
+    debugLevel = logging.DEBUG
+    logging.basicConfig(stream=sys.stderr,
+                        format='%(asctime)s %(levelname)s:%(message)s',
+                        level=debugLevel)
+    fona_main()
