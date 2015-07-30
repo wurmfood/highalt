@@ -3,6 +3,7 @@
 import time
 import RPi.GPIO as GPIO
 import os
+import logging
 
 ############################
 # power.py
@@ -28,7 +29,7 @@ import os
 #
 # Normally, the 3.3 V will keep pin 25 high. However,
 # on pushing the button, the 3.3 V will go to ground and
-# pin 17 will go to low.
+# pin 4 will go to low.
 #
 # Note that pin 17 = board pin 15?
 # Pin 3.3 V = board pin 17
@@ -48,22 +49,37 @@ POWERPIN = 17
 ############################
 def main():
     # Setup GPIO pins
+    logging.info("Power service started. Setting up monitoring.")
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(POWERPIN, GPIO.IN)
+    logging.debug("Pin: {0}".format(POWERPIN))
+    GPIO.setup(POWERPIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+    logging.debug("Pin state: {0}".format(GPIO.input(POWERPIN)))
 
     while True:
         # Monitor the pin.
+        logging.debug("Monitoring the pin.")
         GPIO.wait_for_edge(POWERPIN,
                            GPIO.FALLING)
+        logging.info("Power button pushed. Checking again in 5 sec.")
+        logging.debug("Edge falling detected.")
 
         # Require it to still be pushed after 5 seconds.
         time.sleep(5)
         if GPIO.input(POWERPIN) == 0:
+            logging.info("Pin still down after 5 min. Initiating shutdown.")
             os.system(real_shutdown_cmd)
+        else:
+            logging.info("Button was released. Resetting.")
 
 
 ############################
 # Start it all up.
 ############################
 if __name__ == "__main__":
+    # Setup logging
+    debugLevel = logging.INFO
+    logging.basicConfig(filename='/var/log/power.log',
+                        format='%(asctime)s %(levelname)s: %(message)s',
+                        level=debugLevel)
+
     main()

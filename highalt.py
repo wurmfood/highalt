@@ -53,7 +53,9 @@ if __name__ == "__main__":
 
     # In case we're on the Pi, start up the camera.
     usingCamera = False
-    if os.name != 'nt':
+    arch = os.uname()[4]
+    op_sys = os.uname()[0]
+    if arch == 'armv7l':
         from HighaltHardware.HighaltCamera import CamThreadSupervisor
         logging.info('Enabling camera.')
         usingCamera = True
@@ -65,8 +67,9 @@ if __name__ == "__main__":
     ################################
     # Serial Ports
     ################################
-    arduino_port = 'COM3' if os.name == 'nt' else '/dev/ttyACM0'
-    # fona_port = None if os.name == 'nt' else '/dev/ttyUSB0'
+    arduino_port = 'COM3' if op_sys == 'nt' else '/dev/ttyACM0'
+    fona_port = '/dev/ttyUSB0' if arch == 'arm7l' else None
+
 
     ################################
     # Establish and control the threads we've set up
