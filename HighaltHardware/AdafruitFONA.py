@@ -307,6 +307,7 @@ class FonaThread (Thread):
 
     def run(self):
         logging.debug("Fona control thread: Starting thread running.")
+        self.__setup_callback()
         try:
             while not self.__stop:
                 if not self.__fona.connected:
