@@ -300,6 +300,7 @@ class FonaThread (Thread):
         logging.debug("Fona control thread: Callback function called.")
         if not self.__ser_in_use:
             for msg in self.__get_last_text_message():
+                logging.debug(msg)
                 # Kind of arbitrary, but allows for a number to be 9 or 10 digits
                 # Prevent us from sending a message to auto-texts (like from the carrier)
                 if len(msg.sender_number) > 8:
