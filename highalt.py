@@ -84,12 +84,15 @@ if __name__ == "__main__":
     # Supervise the threads, recreating if needed
     stop = False
     try:
+        logging.info("Starting Arduino thread.")
         ArduinoSupThread = ArduinoThreadSupervisor(arduino_port, sDir)
         ArduinoSupThread.start()
         if usingCamera:
+            logging.info("Starting Camera thread.")
             CamSupThread = CamThreadSupervisor(vDir, 600, 30)
             CamSupThread.start()
         if fona_port:
+            logging.info("Starting Fona thread.")
             GPIO.setmode(GPIO.BCM)
             FonaSupervisor = FonaThread(fona_port, 4, ArduinoSupThread.current_gps_coords)
             FonaSupervisor.start()
