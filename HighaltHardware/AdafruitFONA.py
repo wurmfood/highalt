@@ -33,19 +33,24 @@ class FonaMessage(object):
         self.__parse(raw_text_message)
 
     def __parse(self, raw_text_message):
-        # raw_text_message will have two lines. The first is headers, the second the message.
-        # Headers are a comma seperated list.
-        logging.debug("Raw message: {0}".format(raw_text_message))
-        headers = raw_text_message[0].split(",")
-        logging.debug("Headers: {0}".format(headers))
-        # Response includes '+CMGL: ' before the message number. Strip that part.
-        self.__msg_number = headers[0][7:]
-        # Get rid of the "+ at the front and " at the end.
-        self.__sender_number = headers[2].replace("+", "").replace('\"', '')
-        # Date and time are separate. Join them together.
-        self.__msg_date = ", ".join(headers[4:])
-        # The text message is the second part. Replace carriage returns with carriage return + newline.
-        self.__text_message = raw_text_message[1].replace("\r", "\r\n")
+        try:
+            # raw_text_message will have two lines. The first is headers, the second the message.
+            # Headers are a comma seperated list.
+            logging.debug("Raw message: {0}".format(raw_text_message))
+            headers = raw_text_message[0].split(",")
+            logging.debug("Headers: {0}".format(headers))
+            # Response includes '+CMGL: ' before the message number. Strip that part.
+            self.__msg_number = headers[0][7:]
+            # Get rid of the "+ at the front and " at the end.
+            self.__sender_number = headers[2].replace("+", "").replace('\"', '')
+            # Date and time are separate. Join them together.
+            self.__msg_date = ", ".join(headers[4:])
+            # The text message is the second part. Replace carriage returns with carriage return + newline.
+            self.__text_message = raw_text_message[1].replace("\r", "\r\n")
+        except IndexError as err:
+            logging.warning("Fona Message message parse caught an error:")
+            logging.debug(err.args)
+            logging.debug(raw_text_message)
 
     def __str__(self):
         return "Message Number: {0}\r\nSender: {1}\r\nDate: {2}\r\nMessage: {3}\r\n".format(self.__msg_number,
@@ -222,6 +227,7 @@ class Fona(object):
             raw_messages = self.__status_query("".join(cmd))
             trimmed_messages = []
             for line in raw_messages:
+                logging.debug(line)
                 if not str.startswith(line, "AT+CMGL"):
                     # Comes up at strange times. Discard.
                     if not str.startswith(line, "+CMTI"):
