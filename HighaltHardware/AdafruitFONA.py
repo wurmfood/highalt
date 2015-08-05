@@ -300,8 +300,8 @@ class FonaThread (Thread):
         return self.__fona.get_current_text_messages(False, False)
 
     def __send_response(self, destination_number, message_content):
-        logging.debug("Fona control thread: Sending message to {0}.".format(destination_number))
-        logging.debug("Fona control thread: Message content: {0}.".format(message_content))
+        logging.info("Fona control thread: Sending message to {0}.".format(destination_number))
+        logging.info("Fona control thread: Message content: {0}.".format(message_content))
         self.__fona.send_text_message(destination_number, message_content)
 
     def __ring_callback(self, channel):
@@ -314,7 +314,11 @@ class FonaThread (Thread):
                 # Kind of arbitrary, but allows for a number to be 9 or 10 digits
                 # Prevent us from sending a message to auto-texts (like from the carrier)
                 if len(msg.sender_number) > 8:
+                    logging.info("Message received from: {0}. Sending reply".format(msg.sender_number))
                     self.__send_response(msg.sender_number, self.__gps_coords)
+                else:
+                    logging.info("Message received from {0} on {1}".format(msg.sender_number, msg.message_date))
+                    logging.info("Message: {0}".format(msg.text_message))
         else:
             sleep(1)
 
@@ -368,9 +372,9 @@ def fona_main():
         # msgs = my_fona.get_current_text_messages(include_read=False, leave_unread=True)
         # for msg in msgs:
         #     print(msg)
-            # text_response = datetime.datetime.now().isoformat()
-            # print(text_response)
-            # print(my_fona.send_text_message(destination, text_response))
+        #     text_response = datetime.datetime.now().isoformat()
+        #     print(text_response)
+        #     print(my_fona.send_text_message(destination, text_response))
 
         my_fona_thread = FonaThread(SERIAL_PORT, ring_indicator_pin=4, gps_coord_locaiton="Fake data.")
         my_fona_thread.start()
