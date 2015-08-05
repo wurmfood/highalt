@@ -305,13 +305,6 @@ class FonaThread (Thread):
         GPIO.add_event_detect(self.__ring_pin, GPIO.FALLING, callback=self.__ring_callback)
         pass
 
-    def run_tests(self):
-        logging.debug("Running general tests.")
-        for msg in self.__get_last_text_message():
-            print(msg)
-            if len(msg.sender_number) > 8:
-                print("Would send message to {0}.".format(msg.sender_number))
-
     def run(self):
         logging.debug("Fona control thread: Starting thread running.")
         try:
@@ -356,7 +349,6 @@ def fona_main():
         my_fona_thread = FonaThread(SERIAL_PORT, ring_indicator_pin=4, gps_coord_locaiton="Fake data.")
         my_fona_thread.start()
         sleep(10)
-        my_fona_thread.run_tests()
         sleep(20)
         my_fona_thread.stop()
         sleep(2)
