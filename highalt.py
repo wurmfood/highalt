@@ -3,7 +3,7 @@
 import os
 import datetime
 import logging
-import sys
+from time import sleep
 from HighaltHardware.HighaltArduino import ArduinoThreadSupervisor
 from HighaltHardware.AdafruitFONA import FonaThread
 
@@ -87,6 +87,7 @@ if __name__ == "__main__":
         logging.info("Starting Arduino thread.")
         ArduinoSupThread = ArduinoThreadSupervisor(arduino_port, sDir)
         ArduinoSupThread.start()
+        sleep(1)
         if usingCamera:
             logging.info("Starting Camera thread.")
             CamSupThread = CamThreadSupervisor(vDir, 600, 30)
@@ -112,11 +113,9 @@ if __name__ == "__main__":
     except NameError as err:
         logging.warning("Thread Control - Name Error:")
         logging.warning(err.args)
-    except AttributeError as err:
-        logging.warning("Thread Control - Attribute Error:")
-        for i in err.args:
-            logging.warning(i)
-    except:
-        logging.warning('Thread Control - Exception: {0}'.format(sys.exc_info()[0]))
+    # except AttributeError as err:
+    #    logging.warning("Thread Control - Attribute Error:")
+    #    for i in err.args:
+    #        logging.warning(i)
     finally:
         logging.shutdown()
