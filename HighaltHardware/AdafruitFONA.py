@@ -257,29 +257,39 @@ class Fona(object):
 # FONA control thread
 #################
 class FonaThread (Thread):
-    def __init__(self, serial_port, ring_indicator_pin=None, gps_cood_locaiton=None):
+    def __init__(self, serial_port, ring_indicator_pin=None, gps_coord_locaiton=None):
+        logging.debug("Fona control thread: Initializing.")
+        logging.debug("Fona control thread: Using port: {0}".format(serial_port))
+        logging.debug("Fona control thread: RI pint: {0}".format(ring_indicator_pin))
+        logging.debug("Fona control thread: Using port: {0}".format(gps_coord_locaiton))
         super().__init__(self)
         self.__fona_port = serial_port
         self.__ring_pin = ring_indicator_pin
-        self.__gps_coords = gps_cood_locaiton
+        self.__gps_coords = gps_coord_locaiton
         self.__stop = False
         self.__fona = Fona(serial_port=self.__fona_port)
         # Using this as a semaphore for the moment. It's not the best way, but I'll look into that later.
         self.__ser_in_use = False
 
     def stop(self):
+        logging.debug("Fona control thread: Stop called.")
         self.__stop = True
 
     def __connect_to_fona(self):
+        logging.debug("Fona control thread: Connecting to Fona.")
         self.__fona.connect()
 
     def __get_last_text_message(self):
+        logging.debug("Fona control thread: Retrieving messages.")
         return self.__fona.get_current_text_messages(False, False)
 
     def __send_response(self, destination_number, message_content):
+        logging.debug("Fona control thread: Sending message to {0}.".format(destination_number))
+        logging.debug("Fona control thread: Message content: {0}.".format(message_content))
         self.__fona.send_text_message(destination_number, message_content)
 
     def __ring_callback(self, channel):
+        logging.debug("Fona control thread: Callback function called.")
         if not self.__ser_in_use:
             for msg in self.__get_last_text_message():
                 # Kind of arbitrary, but allows for a number to be 9 or 10 digits
@@ -290,10 +300,12 @@ class FonaThread (Thread):
             sleep(1)
 
     def __setup_callback(self):
-        # GPIO.add_event_detect(self.__ring_pin, GPIO.FALLING, callback=self.__ring_callback)
+        logging.debug("Fona control thread: Setting up callback function.")
+        GPIO.add_event_detect(self.__ring_pin, GPIO.FALLING, callback=self.__ring_callback)
         pass
 
     def run(self):
+        logging.debug("Fona control thread: Starting thread running.")
         try:
             while not self.__stop:
                 if not self.__fona.connected:
@@ -302,6 +314,7 @@ class FonaThread (Thread):
                 self.__fona.keep_alive()
                 self.__ser_in_use = False
                 sleep(5)
+            logging.debug("Fona control thread: Stop was set.")
         finally:
             self.__fona.disconnect()
         pass
@@ -331,6 +344,12 @@ def fona_main():
             # text_response = datetime.datetime.now().isoformat()
             # print(text_response)
             # print(my_fona.send_text_message(destination, text_response))
+
+        my_fona_thread = FonaThread(SERIAL_PORT, ring_indicator_pin=4, gps_coord_locaiton="Fake data.")
+        my_fona_thread.start()
+        sleep(10)
+        my_fona_thread.stop()
+        sleep(2)
 
     except serial.SerialTimeoutException as err:
         print("Error: {0}".format(err))
