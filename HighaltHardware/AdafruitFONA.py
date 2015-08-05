@@ -307,7 +307,7 @@ class FonaThread (Thread):
     def __ring_callback(self, channel):
         logging.debug("Fona control thread: Callback function called.")
         # Send a keep-alive to flush some data.
-        logging.debug(self.__fona.keep_alive())
+        self.__fona.keep_alive()
         if not self.__ser_in_use:
             for msg in self.__get_last_text_message():
                 logging.debug(msg)

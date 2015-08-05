@@ -5,6 +5,7 @@ import datetime
 import logging
 import sys
 from HighaltHardware.HighaltArduino import ArduinoThreadSupervisor
+from HighaltHardware.AdafruitFONA import FonaThread
 
 
 # Create the directories we're going to store things in.
@@ -70,26 +71,37 @@ if __name__ == "__main__":
     arduino_port = 'COM3' if op_sys == 'nt' else '/dev/ttyUSB0'
     fona_port = '/dev/ttyACM0' if arch == 'arm7l' else None
 
-
     ################################
     # Establish and control the threads we've set up
     ################################
 
     ArduinoSupThread = None
     CamSupThread = None
+    FonaSupervisor = None
 
     # Supervise the threads, recreating if needed
+    stop = False
     try:
         ArduinoSupThread = ArduinoThreadSupervisor(arduino_port, sDir)
         ArduinoSupThread.start()
         if usingCamera:
             CamSupThread = CamThreadSupervisor(vDir, 600, 30)
             CamSupThread.start()
-            CamSupThread.join()
-        ArduinoSupThread.join()
+        if fona_port:
+            FonaSupervisor = FonaThread(fona_port, 4, ArduinoSupThread.current_gps_coords)
+            FonaSupervisor.start()
+        while not stop:
+            if usingCamera:
+                CamSupThread.join(5)
+            if fona_port:
+                FonaSupervisor.join(5)
+            ArduinoSupThread.join(5)
+
     except KeyboardInterrupt:
         logging.warning("Received keyboard interrupt. Shutting down.")
+        stop = True
         ArduinoSupThread.stop()
+        FonaSupervisor.stop()
         CamSupThread.stop()
     except:
         logging.warning('Thread Control - Exception: {0}'.format(sys.exc_info()[0]))
