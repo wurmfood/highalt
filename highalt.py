@@ -110,6 +110,9 @@ if __name__ == "__main__":
         ArduinoSupThread.stop()
         FonaSupervisor.stop()
         CamSupThread.stop()
+    except NameError as err:
+        logging.warning("Thread Control - Name Error:")
+        logging.warning(err.args)
     except:
         logging.warning('Thread Control - Exception: {0}'.format(sys.exc_info()[0]))
     finally:
