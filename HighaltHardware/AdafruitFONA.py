@@ -353,9 +353,11 @@ def fona_main():
             # print(text_response)
             # print(my_fona.send_text_message(destination, text_response))
 
-        my_fona_thread = FonaTest(SERIAL_PORT, ring_indicator_pin=4, gps_coord_locaiton="Fake data.")
+        my_fona_thread = FonaThread(SERIAL_PORT, ring_indicator_pin=4, gps_coord_locaiton="Fake data.")
         my_fona_thread.start()
         sleep(10)
+        my_fona_thread.run_tests()
+        sleep(20)
         my_fona_thread.stop()
         sleep(2)
         GPIO.cleanup()
