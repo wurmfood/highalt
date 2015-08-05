@@ -419,6 +419,7 @@ def fona_main():
         my_fona_thread.run_tests()
         my_fona_thread.stop()
         sleep(2)
+        GPIO.cleanup()
 
     except serial.SerialTimeoutException as err:
         print("Error: {0}".format(err))
