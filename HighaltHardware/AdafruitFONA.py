@@ -18,7 +18,7 @@
 #################
 # Includes
 #################
-# import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 import serial
 import logging
 from threading import Thread
@@ -258,7 +258,7 @@ class Fona(object):
 #################
 class FonaThread (Thread):
     def __init__(self, serial_port, ring_indicator_pin=None, gps_coord_locaiton=None):
-        super().__init__(self)
+        Thread.__init__(self)
         logging.debug("Fona control thread: Initializing.")
         logging.debug("Fona control thread: Using port: {0}".format(serial_port))
         logging.debug("Fona control thread: RI pint: {0}".format(ring_indicator_pin))
@@ -304,6 +304,13 @@ class FonaThread (Thread):
         GPIO.add_event_detect(self.__ring_pin, GPIO.FALLING, callback=self.__ring_callback)
         pass
 
+    def run_tests(self):
+        logging.debug("Running general tests.")
+        for msg in self.__get_last_text_message():
+            print(msg)
+            if(msg.sender_number) > 8:
+                print("Would send message to {0}.".format(msg.sender_number))
+
     def run(self):
         logging.debug("Fona control thread: Starting thread running.")
         try:
@@ -326,7 +333,7 @@ class FonaThread (Thread):
 def fona_main():
     # Only for testing. Remove later.
     SERIAL_PORT = "/dev/ttyAMA0"
-    # GPIO.setmode(GPIO.BCM)
+    GPIO.setmode(GPIO.BCM)
     my_fona = Fona(SERIAL_PORT)
     try:
         my_fona.connect()
@@ -347,6 +354,7 @@ def fona_main():
 
         my_fona_thread = FonaThread(SERIAL_PORT, ring_indicator_pin=4, gps_coord_locaiton="Fake data.")
         my_fona_thread.start()
+        my_fona_thread.run_tests()
         sleep(10)
         my_fona_thread.stop()
         sleep(2)
