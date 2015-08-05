@@ -87,7 +87,8 @@ if __name__ == "__main__":
         logging.info("Starting Arduino thread.")
         ArduinoSupThread = ArduinoThreadSupervisor(arduino_port, sDir)
         ArduinoSupThread.start()
-        sleep(1)
+        logging.info("Sleeping while we wait for the Arduino to get going.")
+        sleep(5)
         if usingCamera:
             logging.info("Starting Camera thread.")
             CamSupThread = CamThreadSupervisor(vDir, 600, 30)
