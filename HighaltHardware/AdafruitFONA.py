@@ -338,24 +338,24 @@ def fona_main():
     try:
         my_fona.connect()
 
-        print("ATI: {0}".format(my_fona.ATI))
-        print("Sim Card Number: {0}".format(my_fona.sim_card_number))
-        print("Network Status: {0}".format(my_fona.network_status))
-        print("Ringer: {0}".format(my_fona.ringer))
+        # print("ATI: {0}".format(my_fona.ATI))
+        # print("Sim Card Number: {0}".format(my_fona.sim_card_number))
+        # print("Network Status: {0}".format(my_fona.network_status))
+        # print("Ringer: {0}".format(my_fona.ringer))
         # GPIO.cleanup()
 
         # import datetime
-        msgs = my_fona.get_current_text_messages(include_read=False, leave_unread=True)
-        for msg in msgs:
-            print(msg)
+        # msgs = my_fona.get_current_text_messages(include_read=False, leave_unread=True)
+        # for msg in msgs:
+        #     print(msg)
             # text_response = datetime.datetime.now().isoformat()
             # print(text_response)
             # print(my_fona.send_text_message(destination, text_response))
 
         my_fona_thread = FonaThread(SERIAL_PORT, ring_indicator_pin=4, gps_coord_locaiton="Fake data.")
         my_fona_thread.start()
-        my_fona_thread.run_tests()
         sleep(10)
+        my_fona_thread.run_tests()
         my_fona_thread.stop()
         sleep(2)
 
