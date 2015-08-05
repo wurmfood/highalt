@@ -71,7 +71,7 @@ if __name__ == "__main__":
     # Serial Ports
     ################################
     arduino_port = 'COM3' if op_sys == 'nt' else '/dev/ttyUSB0'
-    fona_port = '/dev/ttyACM0' if arch == 'armv7l' else None
+    fona_port = '/dev/ttyAMA0' if arch == 'armv7l' else None
 
     ################################
     # Establish and control the threads we've set up
