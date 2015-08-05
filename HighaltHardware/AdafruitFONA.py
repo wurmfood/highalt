@@ -356,14 +356,6 @@ class FonaTest (Thread):
 
     def __ring_callback(self, channel):
         logging.debug("Fona control thread: Callback function called.")
-        if not self.__ser_in_use:
-            for msg in self.__get_last_text_message():
-                # Kind of arbitrary, but allows for a number to be 9 or 10 digits
-                # Prevent us from sending a message to auto-texts (like from the carrier)
-                if len(msg.sender_number) > 8:
-                    logging.debug("We would send {0} to {1}".format(self.__gps_coords, msg.sender_number))
-        else:
-            sleep(1)
 
     def __setup_callback(self):
         logging.debug("Fona control thread: Setting up callback function.")
@@ -416,7 +408,6 @@ def fona_main():
         my_fona_thread = FonaTest(SERIAL_PORT, ring_indicator_pin=4, gps_coord_locaiton="Fake data.")
         my_fona_thread.start()
         sleep(10)
-        my_fona_thread.run_tests()
         my_fona_thread.stop()
         sleep(2)
         GPIO.cleanup()
