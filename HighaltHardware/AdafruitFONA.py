@@ -341,7 +341,7 @@ def fona_main():
     try:
         my_fona.connect()
 
-        msgs = my_fona.get_current_text_messages()
+        msgs = my_fona.get_current_text_messages(include_read=True, leave_unread=True)
         for msg in msgs:
             print(msg)
 
