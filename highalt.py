@@ -90,18 +90,19 @@ if __name__ == "__main__":
         if usingCamera:
             logging.info("Starting Camera thread.")
             CamSupThread = CamThreadSupervisor(vDir, 600, 30)
-            CamSupThread.start()
+            # CamSupThread.start()
         if fona_port:
             logging.info("Starting Fona thread.")
             GPIO.setmode(GPIO.BCM)
             FonaSupervisor = FonaThread(fona_port, 4, ArduinoSupThread.current_gps_coords)
-            FonaSupervisor.start()
+            # FonaSupervisor.start()
         while not stop:
             if usingCamera:
-                CamSupThread.join(5)
+                # CamSupThread.join(5)
+                pass
             if fona_port:
                 FonaSupervisor.join(5)
-            ArduinoSupThread.join(5)
+            # ArduinoSupThread.join(5)
 
     except KeyboardInterrupt:
         logging.warning("Received keyboard interrupt. Shutting down.")
