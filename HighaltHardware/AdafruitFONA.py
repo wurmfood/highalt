@@ -252,6 +252,14 @@ class Fona(object):
             logging.warning(err.args[0])
             return 0
 
+    def delete_all_messages(self):
+        cmd = 'AT+CMGD=1,4'
+        try:
+            return self.__status_query(cmd)
+        except serial.SerialException as err:
+            logging.warning(err.args[0])
+            return 0
+
 
 #################
 # FONA control thread
@@ -333,6 +341,11 @@ def fona_main():
     try:
         my_fona.connect()
 
+        msgs = my_fona.get_current_text_messages()
+        for msg in msgs:
+            print(msg)
+
+        print(my_fona.delete_all_messages())
         # print("ATI: {0}".format(my_fona.ATI))
         # print("Sim Card Number: {0}".format(my_fona.sim_card_number))
         # print("Network Status: {0}".format(my_fona.network_status))
