@@ -281,7 +281,8 @@ class FonaThread (Thread):
 
     def __get_last_text_message(self):
         logging.debug("Fona control thread: Retrieving messages.")
-        return self.__fona.get_current_text_messages(False, False)
+        # TODO: Change this back to False, False.
+        return self.__fona.get_current_text_messages(False, True)
 
     def __send_response(self, destination_number, message_content):
         logging.debug("Fona control thread: Sending message to {0}.".format(destination_number))
@@ -308,7 +309,7 @@ class FonaThread (Thread):
         logging.debug("Running general tests.")
         for msg in self.__get_last_text_message():
             print(msg)
-            if(msg.sender_number) > 8:
+            if len(msg.sender_number) > 8:
                 print("Would send message to {0}.".format(msg.sender_number))
 
     def run(self):
