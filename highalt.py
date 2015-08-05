@@ -56,6 +56,8 @@ if __name__ == "__main__":
     usingCamera = False
     arch = os.uname()[4]
     op_sys = os.uname()[0]
+    logging.info("Architecture: {0}".format(arch))
+    logging.info("OS Name: {0}".format(op_sys))
     if arch == 'armv7l':
         from HighaltHardware.HighaltCamera import CamThreadSupervisor
         logging.info('Enabling camera.')
@@ -88,6 +90,7 @@ if __name__ == "__main__":
             CamSupThread = CamThreadSupervisor(vDir, 600, 30)
             CamSupThread.start()
         if fona_port:
+            GPIO.setmode(GPIO.BCM)
             FonaSupervisor = FonaThread(fona_port, 4, ArduinoSupThread.current_gps_coords)
             FonaSupervisor.start()
         while not stop:
