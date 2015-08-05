@@ -258,11 +258,11 @@ class Fona(object):
 #################
 class FonaThread (Thread):
     def __init__(self, serial_port, ring_indicator_pin=None, gps_coord_locaiton=None):
+        super().__init__(self)
         logging.debug("Fona control thread: Initializing.")
         logging.debug("Fona control thread: Using port: {0}".format(serial_port))
         logging.debug("Fona control thread: RI pint: {0}".format(ring_indicator_pin))
-        logging.debug("Fona control thread: Using port: {0}".format(gps_coord_locaiton))
-        super().__init__(self)
+        logging.debug("Fona control thread: GPS Coordinates: {0}".format(gps_coord_locaiton))
         self.__fona_port = serial_port
         self.__ring_pin = ring_indicator_pin
         self.__gps_coords = gps_coord_locaiton
