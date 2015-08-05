@@ -361,12 +361,13 @@ class FonaTest (Thread):
                 # Kind of arbitrary, but allows for a number to be 9 or 10 digits
                 # Prevent us from sending a message to auto-texts (like from the carrier)
                 if len(msg.sender_number) > 8:
-                    self.__send_response(msg.sender_number, self.__gps_coords)
+                    logging.debug("We would send {0} to {1}".format(self.__gps_coords, msg.sender_number))
         else:
             sleep(1)
 
     def __setup_callback(self):
         logging.debug("Fona control thread: Setting up callback function.")
+        GPIO.setup(self.__ring_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(self.__ring_pin, GPIO.FALLING, callback=self.__ring_callback)
         pass
 
