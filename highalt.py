@@ -93,7 +93,6 @@ if __name__ == "__main__":
             # CamSupThread.start()
         if fona_port:
             logging.info("Starting Fona thread.")
-            GPIO.setmode(GPIO.BCM)
             FonaSupervisor = FonaThread(fona_port, 4, ArduinoSupThread.current_gps_coords)
             FonaSupervisor.start()
         while not stop:

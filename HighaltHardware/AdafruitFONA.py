@@ -320,6 +320,7 @@ class FonaThread (Thread):
 
     def __setup_callback(self):
         logging.debug("Fona control thread: Setting up callback function.")
+        GPIO.setmode(BCM)
         GPIO.setup(self.__ring_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(self.__ring_pin, GPIO.FALLING, callback=self.__ring_callback)
         pass
