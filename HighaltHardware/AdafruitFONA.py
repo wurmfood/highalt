@@ -223,10 +223,12 @@ class Fona(object):
             trimmed_messages = []
             for line in raw_messages:
                 if not str.startswith(line, "AT+CMGL"):
-                    # Don't include lines that are only \r\n.
-                    if not str.isspace(line):
-                        # Strip off extra \r\n at the end of each line
-                        trimmed_messages.append(line.rstrip())
+                    # Comes up at strange times. Discard.
+                    if not str.startswith(line, "+CMTI"):
+                        # Don't include lines that are only \r\n.
+                        if not str.isspace(line):
+                            # Strip off extra \r\n at the end of each line
+                            trimmed_messages.append(line.rstrip())
 
             messages = []
             for i in range(0, int((len(trimmed_messages) - 1)/2)):
