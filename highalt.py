@@ -67,8 +67,8 @@ if __name__ == "__main__":
     ################################
     # Serial Ports
     ################################
-    arduino_port = 'COM3' if op_sys == 'nt' else '/dev/ttyACM0'
-    fona_port = '/dev/ttyUSB0' if arch == 'arm7l' else None
+    arduino_port = 'COM3' if op_sys == 'nt' else '/dev/ttyUSB0'
+    fona_port = '/dev/ttyACM0' if arch == 'arm7l' else None
 
 
     ################################

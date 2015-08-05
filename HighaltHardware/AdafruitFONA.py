@@ -312,7 +312,7 @@ class FonaThread (Thread):
 #################
 def fona_main():
     # Only for testing. Remove later.
-    SERIAL_PORT = "/dev/ttyUSB0"
+    SERIAL_PORT = "/dev/ttyAMA0"
     # GPIO.setmode(GPIO.BCM)
     my_fona = Fona(SERIAL_PORT)
     try:
