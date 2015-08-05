@@ -112,6 +112,10 @@ if __name__ == "__main__":
     except NameError as err:
         logging.warning("Thread Control - Name Error:")
         logging.warning(err.args)
+    except AttributeError as err:
+        logging.warning("Thread Control - Attribute Error:")
+        for i in err.args:
+            logging.warning(i)
     except:
         logging.warning('Thread Control - Exception: {0}'.format(sys.exc_info()[0]))
     finally:
