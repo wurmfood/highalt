@@ -281,8 +281,7 @@ class FonaThread (Thread):
 
     def __get_last_text_message(self):
         logging.debug("Fona control thread: Retrieving messages.")
-        # TODO: Change this back to False, False.
-        return self.__fona.get_current_text_messages(False, True)
+        return self.__fona.get_current_text_messages(False, False)
 
     def __send_response(self, destination_number, message_content):
         logging.debug("Fona control thread: Sending message to {0}.".format(destination_number))
@@ -302,6 +301,7 @@ class FonaThread (Thread):
 
     def __setup_callback(self):
         logging.debug("Fona control thread: Setting up callback function.")
+        GPIO.setup(self.__ring_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(self.__ring_pin, GPIO.FALLING, callback=self.__ring_callback)
         pass
 
@@ -315,58 +315,6 @@ class FonaThread (Thread):
     def run(self):
         logging.debug("Fona control thread: Starting thread running.")
         try:
-            while not self.__stop:
-                if not self.__fona.connected:
-                    self.__fona.connect()
-                self.__ser_in_use = True
-                self.__fona.keep_alive()
-                self.__ser_in_use = False
-                sleep(5)
-            logging.debug("Fona control thread: Stop was set.")
-        finally:
-            self.__fona.disconnect()
-        pass
-
-
-#################
-# FONA control thread
-#################
-class FonaTest (Thread):
-    def __init__(self, serial_port, ring_indicator_pin=None, gps_coord_locaiton=None):
-        Thread.__init__(self)
-        logging.debug("Fona control thread: Initializing.")
-        logging.debug("Fona control thread: Using port: {0}".format(serial_port))
-        logging.debug("Fona control thread: RI pint: {0}".format(ring_indicator_pin))
-        logging.debug("Fona control thread: GPS Coordinates: {0}".format(gps_coord_locaiton))
-        self.__fona_port = serial_port
-        self.__ring_pin = ring_indicator_pin
-        self.__gps_coords = gps_coord_locaiton
-        self.__stop = False
-        self.__fona = Fona(serial_port=self.__fona_port)
-        # Using this as a semaphore for the moment. It's not the best way, but I'll look into that later.
-        self.__ser_in_use = False
-
-    def stop(self):
-        logging.debug("Fona control thread: Stop called.")
-        self.__stop = True
-
-    def __connect_to_fona(self):
-        logging.debug("Fona control thread: Connecting to Fona.")
-        self.__fona.connect()
-
-    def __ring_callback(self, channel):
-        logging.debug("Fona control thread: Callback function called.")
-
-    def __setup_callback(self):
-        logging.debug("Fona control thread: Setting up callback function.")
-        GPIO.setup(self.__ring_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.add_event_detect(self.__ring_pin, GPIO.FALLING, callback=self.__ring_callback)
-        pass
-
-    def run(self):
-        logging.debug("Fona control thread: Starting thread running.")
-        try:
-            self.__setup_callback()
             while not self.__stop:
                 if not self.__fona.connected:
                     self.__fona.connect()
