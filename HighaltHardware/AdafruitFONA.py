@@ -320,7 +320,7 @@ class FonaThread (Thread):
 
     def __setup_callback(self):
         logging.debug("Fona control thread: Setting up callback function.")
-        GPIO.setmode(BCM)
+        GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.__ring_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(self.__ring_pin, GPIO.FALLING, callback=self.__ring_callback)
         pass
@@ -332,9 +332,9 @@ class FonaThread (Thread):
             while not self.__stop:
                 if not self.__fona.connected:
                     self.__fona.connect()
-                self.__ser_in_use = True
-                self.__fona.keep_alive()
-                self.__ser_in_use = False
+                # self.__ser_in_use = True
+                # self.__fona.keep_alive()
+                # self.__ser_in_use = False
                 sleep(5)
             logging.debug("Fona control thread: Stop was set.")
         finally:
