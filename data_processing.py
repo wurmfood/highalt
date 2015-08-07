@@ -182,6 +182,7 @@ def main(argv):
         # 't' is for text mode.
         with open(outfile, mode='wt') as outfile_fd:
             for f in file_list:
+                print("Reading: {0}.".format(f))
                 processed_headers = process_file(f, outfile_fd, processed_headers)
     finally:
         pass
