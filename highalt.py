@@ -81,6 +81,10 @@ if __name__ == "__main__":
     CamSupThread = None
     FonaSupervisor = None
 
+    # TODO: Delete before actual use.
+    # Don't actually turn on the camera for right now.
+    # usingCamera = False
+
     # Supervise the threads, recreating if needed
     stop = False
     try:
