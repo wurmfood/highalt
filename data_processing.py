@@ -138,7 +138,6 @@ def process_file(inpath, fileout, headers_proccessed):
                 # (there's also a line that's GPS: OK if the gps is working right)
                 if line[0:9] == "Arduino: ":
                     fileout.write(line)
-                    # fileout.write('\n')
                     headers_proccessed = True
                 else:
                     # If it isn't, it must be something else that we're not worried about,
@@ -147,7 +146,6 @@ def process_file(inpath, fileout, headers_proccessed):
             # So long as it's not another header line, dump it to the outfile.
             elif line[0:9] != "Arduino: ":
                 fileout.write(line)
-                # fileout.write('\n')
     return headers_proccessed
 
 
