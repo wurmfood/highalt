@@ -131,21 +131,13 @@ def get_contents(inDir):
 def process_file(inpath, fileout, headers_proccessed):
     with open(inpath) as filein:
         for line in filein:
-            # Correct for something dumb I'm doing elsewhere. If I ever get
-            # around to fixing the Arduino code, I can clean this up a lot.
-            data = line.rstrip().split(' : ')
-
             # If we haven't yet processed headers, try to find some.
             if not headers_proccessed:
-                # If we have a header, all of data[0] should be that header.
+                # If we have a header, all of the line should be that header.
                 # To make sure, check the first nine characters of data[0].
                 # (there's also a line that's GPS: OK if the gps is working right)
-                if data[0][0:9] == "GPS: Date":
-                    # Splice onto the beginning:
-                    s = 'millis, '
-                    # Join the rest with commas.
-                    s += ','.join(data)
-                    fileout.write(s)
+                if line[0:9] == "Arduino: ":
+                    fileout.write(line)
                     fileout.write('\n')
                     headers_proccessed = True
                 else:
@@ -153,12 +145,9 @@ def process_file(inpath, fileout, headers_proccessed):
                     # so ignore it.
                     pass
             # So long as it's not another header line, dump it to the outfile.
-            elif not data[0][0:3] == "GPS":
-                # Join the whole thing using commas.
-                s = ','.join(data)
-                fileout.write(s)
-                fileout.write('\n')
-
+            elif line[0:9] != "Arduino: ":
+                fileout.write(line + '\n')
+                # fileout.write('\n')
     return headers_proccessed
 
 
