@@ -183,7 +183,7 @@ def main(argv):
         with open(outfile, mode='wt') as outfile_fd:
             for f in file_list:
                 processed_headers = process_file(f, outfile_fd, processed_headers)
-    except:
+    finally:
         pass
 
 
